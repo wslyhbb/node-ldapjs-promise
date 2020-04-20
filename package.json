@@ -1,0 +1,29 @@
+{
+  "name": "ldapjs-promise",
+  "version": "0.1.0",
+  "description": "A simple promise wrapper around ldapjs.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wslyhbb/node-ldapjs-promise.git"
+  },
+  "keywords": [
+    "ldap"
+  ],
+  "author": "Wes Hobbie",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wslyhbb/node-ldapjs-promise/issues"
+  },
+  "homepage": "https://github.com/wslyhbb/node-ldapjs-promise#readme",
+  "engines": {
+    "node": ">=0.10"
+  },
+  "dependencies": {
+    "abstract-logging": "^2.0.0",
+    "ldapjs": "^1.0.2"
+  }
+}

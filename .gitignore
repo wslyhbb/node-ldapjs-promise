@@ -1,0 +1,14 @@
+## Directory-based project format:
+.vscode/
+.idea/
+
+### Node template
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+
+### OSX template
+.DS_Store
