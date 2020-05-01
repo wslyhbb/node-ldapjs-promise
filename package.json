@@ -4,7 +4,7 @@
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -25,5 +25,11 @@
   "dependencies": {
     "abstract-logging": "^2.0.0",
     "ldapjs": "^1.0.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.1",
+    "sinon": "^9.0.2"
   }
 }
