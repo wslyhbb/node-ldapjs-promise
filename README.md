@@ -1,4 +1,9 @@
 # node-ldapjs-promise
+
+[![Build Status][travis_image_url]](https://travis-ci.org/wslyhbb/node-ldapjs-promise)
+
+[travis_image_url]: https://travis-ci.org/wslyhbb/node-ldapjs-promise.svg?branch=master
+
 LDAP Client and Server API for node.js with Promise support.
 
 [ldapjs]: https://www.npmjs.com/package/ldapjs
