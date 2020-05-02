@@ -647,4 +647,55 @@ describe('LdapClient', () => {
             assert.isTrue(gotError);
         });
     });
+
+    describe('user in group tests', () => {
+        let client;
+        before(() => {
+            const fakeLdapJsClient = {};
+            sinon.stub(ldapjs, 'createClient').returns(fakeLdapJsClient);
+
+            client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+        });
+
+        after(() => {
+            ldapjs.createClient.restore();
+        });
+
+        it('should determine if user is in specified group', async () => {
+            const searchReturnAllResult = {
+                entries: [
+                    {
+                        cn: 'test.user',
+                        memberOf: [ 'test.group' ]
+                    }
+                ],
+                referrals: []
+            };
+            sinon.stub(client, 'searchReturnAll').resolves(searchReturnAllResult);
+
+            assert.isTrue(await client.userInGroup('', 'test.user', 'test.group'));
+            assert.isFalse(await client.userInGroup('', 'test.user', 'administrator'));
+
+            client.searchReturnAll.restore();
+        });
+
+        it('should fail to determine if user is in specified group', async () => {
+            const thrownError = new Error('user in group error');
+            sinon.stub(client, 'searchReturnAll').rejects(thrownError);
+
+            let gotError = false;
+            try {
+                await client.userInGroup('', 'test.user', 'test.group');
+            } catch (error) {
+                gotError = true;
+                assert.equal(error, thrownError);
+            }
+
+            client.searchReturnAll.restore();
+
+            assert.isTrue(gotError);
+        });
+    });
 });
