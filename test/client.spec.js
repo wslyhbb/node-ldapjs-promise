@@ -581,4 +581,53 @@ describe('LdapClient', () => {
             assert.isTrue(gotError);
         });
     });
+
+    describe('findUser tests', () => {
+        let client;
+        before(() => {
+            const fakeLdapJsClient = {};
+            sinon.stub(ldapjs, 'createClient').returns(fakeLdapJsClient);
+
+            client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+        });
+
+        after(() => {
+            ldapjs.createClient.restore();
+        });
+
+        it('should find user by filter', async () => {
+            const searchReturnAllResult = {
+                entries: [
+                    { cn: 'test.user' }
+                ],
+                referrals: []
+            };
+            sinon.stub(client, 'searchReturnAll').resolves(searchReturnAllResult);
+
+            const result = await client.findUser('',
+                '(&(objectcategory=user)(sAMAccountName=test.user))');
+
+            client.searchReturnAll.restore();
+
+            assert.deepEqual(result, searchReturnAllResult.entries[0]);
+        });
+
+        it('should find user by username', async () => {
+            const searchReturnAllResult = {
+                entries: [
+                    { cn: 'test.user' }
+                ],
+                referrals: []
+            };
+            sinon.stub(client, 'searchReturnAll').resolves(searchReturnAllResult);
+
+            const result = await client.findUser('', 'test.user');
+
+            client.searchReturnAll.restore();
+
+            assert.deepEqual(result, searchReturnAllResult.entries[0]);
+        });
+    });
 });
