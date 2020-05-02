@@ -70,3 +70,8 @@ for (let entry of results.entries) {
     ...
 }
 ```
+
+## Additional Methods
+
++ `findUser(base, username, options)`
++ `userInGroup(base, username, groupName)`
