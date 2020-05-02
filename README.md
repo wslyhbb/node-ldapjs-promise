@@ -1,4 +1,4 @@
-# node-ldapjs-promise
+# ldapjs-promise
 
 [![Build Status][travis_image_url]](https://travis-ci.org/wslyhbb/node-ldapjs-promise)
 
