@@ -351,7 +351,7 @@ describe('LdapClient', () => {
         });
 
         it('should fail to modify entry', async () => {
-            const thrownError = new Error('exop error');
+            const thrownError = new Error('modify error');
             const fakeLdapJsClient = {
                 modify(name, change, controls, callback) {
                     callback(thrownError);
@@ -400,7 +400,7 @@ describe('LdapClient', () => {
         });
 
         it('should fail to rename DN entry', async () => {
-            const thrownError = new Error('exop error');
+            const thrownError = new Error('modify DN error');
             const fakeLdapJsClient = {
                 modifyDN(name, newName, controls, callback) {
                     callback(thrownError);
@@ -447,7 +447,7 @@ describe('LdapClient', () => {
         });
 
         it('should fail to search', async () => {
-            const thrownError = new Error('exop error');
+            const thrownError = new Error('search error');
             const fakeLdapJsClient = {
                 search(base, options, controls, callback) {
                     callback(thrownError);
@@ -514,7 +514,7 @@ describe('LdapClient', () => {
         });
 
         it('should fail to search and return all', async () => {
-            const thrownError = new Error('exop error');
+            const thrownError = new Error('search error');
             const fakeLdapJsClient = {
                 search(base, options, controls, callback) {
                     callback(thrownError);
@@ -628,6 +628,23 @@ describe('LdapClient', () => {
             client.searchReturnAll.restore();
 
             assert.deepEqual(result, searchReturnAllResult.entries[0]);
+        });
+
+        it('should fail to find user', async () => {
+            const thrownError = new Error('find user error');
+            sinon.stub(client, 'searchReturnAll').rejects(thrownError);
+
+            let gotError = false;
+            try {
+                await client.findUser('', 'test.user');
+            } catch (error) {
+                gotError = true;
+                assert.equal(error, thrownError);
+            }
+
+            client.searchReturnAll.restore();
+
+            assert.isTrue(gotError);
         });
     });
 });
