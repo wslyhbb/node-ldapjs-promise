@@ -30,7 +30,7 @@ await client.bind(dn, password);
 ```
 
 The [ldapjs] authors made the search method a special method that returns an
-<code>EventEmitter</code> so the user can either handle each
+<code>EventEmitter</code> so the user can handle each
 <code>searchEntry</code> as it is returned. Since this library is just wrapping
 [ldapjs], it does not make any assumptions and returns the same <code>EventEmitter</code>.
 
