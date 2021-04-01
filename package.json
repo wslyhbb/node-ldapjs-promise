@@ -1,6 +1,6 @@
 {
   "name": "ldapjs-promise",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
   "scripts": {
@@ -11,7 +11,8 @@
     "url": "git+https://github.com/wslyhbb/node-ldapjs-promise.git"
   },
   "keywords": [
-    "ldap"
+    "ldap",
+    "ldapjs"
   ],
   "author": "Wes Hobbie",
   "license": "ISC",
@@ -24,12 +25,12 @@
   },
   "dependencies": {
     "abstract-logging": "^2.0.1",
-    "ldapjs": "^2.2.2"
+    "ldapjs": "^2.2.4"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^8.2.1",
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2",
     "nyc": "^15.1.0",
-    "sinon": "^9.2.1"
+    "sinon": "^9.2.4"
   }
 }
