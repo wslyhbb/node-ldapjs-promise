@@ -4,7 +4,9 @@
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "npm run test:unit && npm run test:tsd",
+    "test:unit": "mocha",
+    "test:tsd": "tsd"
   },
   "repository": {
     "type": "git",
@@ -24,13 +26,20 @@
     "node": ">=10"
   },
   "dependencies": {
+    "@types/ldapjs": "^2.2.0",
     "abstract-logging": "^2.0.1",
-    "ldapjs": "^2.2.4"
+    "ldapjs": "^2.3.0"
   },
   "devDependencies": {
     "chai": "^4.3.4",
-    "mocha": "^8.3.2",
+    "mocha": "^9.0.3",
     "nyc": "^15.1.0",
-    "sinon": "^9.2.4"
+    "sinon": "^11.1.2",
+    "tsd": "^0.17.0"
+  },
+  "tsd": {
+    "compilerOptions": {
+      "module": "es2020"
+    }
   }
 }
