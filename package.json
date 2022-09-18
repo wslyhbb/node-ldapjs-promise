@@ -1,6 +1,6 @@
 {
   "name": "ldapjs-promise",
-  "version": "1.0.7",
+  "version": "2.0.0",
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/wslyhbb/node-ldapjs-promise#readme",
   "engines": {
-    "node": ">=10"
+    "node": ">=14"
   },
   "dependencies": {
     "@types/ldapjs": "^2.2.0",
@@ -32,10 +32,10 @@
   },
   "devDependencies": {
     "chai": "^4.3.6",
-    "mocha": "^9.2.2",
+    "mocha": "^10.0.0",
     "nyc": "^15.1.0",
-    "sinon": "^13.0.1",
-    "tsd": "^0.19.1"
+    "sinon": "^14.0.0",
+    "tsd": "^0.24.1"
   },
   "tsd": {
     "compilerOptions": {
