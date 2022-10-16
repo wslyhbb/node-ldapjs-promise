@@ -8,9 +8,9 @@ import {
   SearchReference
 } from '.'
 
-expectType<Promise<Client>>(createClient())
+expectType<Client>(createClient())
 
-const client = await createClient()
+const client = createClient()
 
 expectType<Promise<void>>(client.bind('cn=foo', 'bar'))
 expectType<Promise<void>>(client.bind('cn=foo', 'bar', {}))

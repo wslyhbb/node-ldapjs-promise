@@ -54,5 +54,5 @@ export interface Client extends EventEmitter {
 }
 
 export declare const createClient: {
-  (...args: Parameters<typeof _createClient>): Promise<Client>
+  (...args: Parameters<typeof _createClient>): Client
 }
