@@ -3,8 +3,187 @@ const sinon = require("sinon");
 const { assert } = require('chai');
 const ldapjs = require('ldapjs');
 const ldap = require('../lib');
+const EventEmitter = require("events");
 
 describe('LdapClient', () => {
+    describe('event emitter tests', () => {
+        it('should add event listener', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.addListener('error', () => {});
+
+            assert.equal(client.listenerCount('error'), 1);
+
+            client.on('error', () => {});
+
+            assert.equal(client.listenerCount('error'), 2);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should add once event listener', () => {
+            const eventEmitter = new EventEmitter();
+            sinon.stub(ldapjs, 'createClient').returns(eventEmitter);
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.once('error', () => {});
+
+            assert.equal(client.listenerCount('error'), 1);
+
+            eventEmitter.emit('error');
+
+            assert.equal(client.listenerCount('error'), 0);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should remove event listener', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            const listener = () => {};
+            const listener2 = () => {};
+            client.addListener('error', listener);
+            client.addListener('error', listener2);
+
+            assert.equal(client.listenerCount('error'), 2);
+
+            client.removeListener('error', listener);
+
+            assert.equal(client.listenerCount('error'), 1);
+
+            client.off('error', listener2);
+
+            assert.equal(client.listenerCount('error'), 0);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should remove all event listeners', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.addListener('error', () => {});
+            client.addListener('error', () => {});
+
+            assert.equal(client.listenerCount('error'), 2);
+
+            client.removeAllListeners('error');
+
+            assert.equal(client.listenerCount('error'), 0);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should set max event listeners', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.setMaxListeners(5);
+
+            assert.equal(client.getMaxListeners(), 5);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should get all event listeners by name', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.addListener('error', () => {});
+
+            const listeners = client.listeners('error');
+
+            assert.equal(listeners.length, 1);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should get all raw event listeners by name', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.addListener('error', () => {});
+
+            const listeners = client.rawListeners('error');
+
+            assert.equal(listeners.length, 1);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should prepend event listener', () => {
+            sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            const listener = () => {};
+            const listener2 = () => {};
+            client.addListener('error', listener);
+            client.prependListener('error', listener2);
+
+            const listeners = client.listeners('error');
+
+            assert.equal(listeners[0], listener2);
+            assert.equal(listeners[1], listener);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should prepend once event listener', () => {
+            const eventEmitter = new EventEmitter();
+            sinon.stub(ldapjs, 'createClient').returns(eventEmitter);
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            const listener = () => {};
+            const listener2 = () => {};
+            client.once('error', listener);
+            client.prependOnceListener('error', listener2);
+
+            const listeners = client.listeners('error');
+
+            assert.equal(listeners[0], listener2);
+            assert.equal(listeners[1], listener);
+
+            ldapjs.createClient.restore();
+        });
+
+        it('should get event names', () => {
+            const eventEmitter = new EventEmitter();
+            sinon.stub(ldapjs, 'createClient').returns(eventEmitter);
+
+            const client = ldap.createClient({
+                url: 'ldap://127.0.0.1:1389'
+            });
+            client.addListener('error', () => {});
+
+            const eventNames = client.eventNames();
+
+            assert.equal(eventNames.length, 1);
+            assert.isTrue(eventNames.includes('error'));
+
+            ldapjs.createClient.restore();
+        });
+    });
+
     describe('bind tests', () => {
         it('should bind successfully', async () => {
             const fakeLdapJsClient = {
