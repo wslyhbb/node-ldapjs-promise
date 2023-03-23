@@ -41,7 +41,7 @@ const results = client.search(base, options, controls).then(response => {
     let referrals = [];
     return new Promise((resolve, reject) => {
         response.on('searchEntry', entry => {
-            entries.push(entry.object);
+            entries.push(entry);
         });
         response.on('searchReference', referral => {
             referrals = referrals.concat(referral.uris);
