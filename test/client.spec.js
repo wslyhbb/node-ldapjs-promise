@@ -4,6 +4,7 @@ const { assert } = require('chai');
 const ldapjs = require('ldapjs');
 const ldap = require('../lib');
 const EventEmitter = require("events");
+const { Attribute } = require("../lib");
 
 describe('LdapClient', () => {
     describe('event emitter tests', () => {
@@ -520,9 +521,10 @@ describe('LdapClient', () => {
             });
             const change = new ldap.Change({
                 operation: 'add',
-                modification: {
-                  pets: ['cat', 'dog']
-                }
+                modification: new Attribute({
+                    type: 'pets',
+                    values: ['cat', 'dog']
+                })
             });
             await client.modify('cn=foo', change);
             
@@ -543,9 +545,10 @@ describe('LdapClient', () => {
             });
             const change = new ldap.Change({
                 operation: 'add',
-                modification: {
-                  pets: ['cat', 'dog']
-                }
+                modification: new Attribute({
+                    type: 'pets',
+                    values: ['cat', 'dog']
+                })
             });
             let gotError = false;
             try {
@@ -654,10 +657,16 @@ describe('LdapClient', () => {
             const EventEmitter = require('events').EventEmitter;
             const expectedResponse = new EventEmitter();
             const searchEntry = {
-                object: {
-                    cn: 'foo',
-                    sn: 'bar'
-                }
+                attributes: [
+                    {
+                        type: 'cn',
+                        values: ['foo']
+                    },
+                    {
+                        type: 'sn',
+                        values: ['bar']
+                    }
+                ]
             };
             const searchReference = {
                 uris: [
@@ -688,7 +697,7 @@ describe('LdapClient', () => {
             
             ldapjs.createClient.restore();
             assert.equal(results.entries.length, 1);
-            assert.equal(results.entries[0], searchEntry.object);
+            assert.equal(results.entries[0], searchEntry);
             assert.deepEqual(results.referrals, searchReference.uris);
         });
 
@@ -779,7 +788,11 @@ describe('LdapClient', () => {
         it('should find user by filter', async () => {
             const searchReturnAllResult = {
                 entries: [
-                    { cn: 'test.user' }
+                    {
+                        attributes: [
+                            { type: 'cn', values: [ 'test.user' ] }
+                        ]
+                    }
                 ],
                 referrals: []
             };
@@ -796,7 +809,11 @@ describe('LdapClient', () => {
         it('should find user by username', async () => {
             const searchReturnAllResult = {
                 entries: [
-                    { cn: 'test.user' }
+                    {
+                        attributes: [
+                            { type: 'cn', values: [ 'test.user' ] }
+                        ]
+                    }
                 ],
                 referrals: []
             };
@@ -846,8 +863,10 @@ describe('LdapClient', () => {
             const searchReturnAllResult = {
                 entries: [
                     {
-                        cn: 'test.user',
-                        memberOf: [ 'test.group' ]
+                        attributes: [
+                            { type: 'cn', values: [ 'test.user' ] },
+                            { type: 'memberOf', values: [ 'test.group' ] }
+                        ]
                     }
                 ],
                 referrals: []
