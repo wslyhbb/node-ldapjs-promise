@@ -1,6 +1,6 @@
 {
   "name": "ldapjs-promise",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
   "scripts": {
