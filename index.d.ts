@@ -44,7 +44,7 @@ export interface Client extends EventEmitter {
 
   // Additional methods
   searchReturnAll(base: string, options?: SearchOptions, controls?: Control | Array<Control>): Promise<{
-    entries: Array<SearchEntryObject>,
+    entries: Array<SearchEntry>,
     referrals: Array<SearchReference>
   }>
 
