@@ -5,7 +5,7 @@ import {
   Control,
   createClient as _createClient,
   SearchCallbackResponse,
-  SearchEntryObject,
+  SearchEntry,
   SearchOptions,
   SearchReference
 } from 'ldapjs'
