@@ -4,7 +4,7 @@ import {
   Client,
   Change,
   SearchCallbackResponse,
-  SearchEntryObject,
+  SearchEntry,
   SearchReference
 } from '.'
 
@@ -56,7 +56,7 @@ expectType<Promise<void>>(client.destroy())
 expectType<Promise<void>>(client.destroy(new Error()))
 
 type SearchResult = {
-  entries: SearchEntryObject[],
+  entries: SearchEntry[],
   referrals: SearchReference[]
 }
 expectType<Promise<SearchResult>>(client.searchReturnAll('cn=foo'))
