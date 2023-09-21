@@ -1,6 +1,6 @@
 {
   "name": "ldapjs-promise",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@types/ldapjs": "^2.2.0",
+    "@types/ldapjs": "^3.0.2",
     "abstract-logging": "^2.0.1",
     "ldapjs": "^3.0.1"
   },
