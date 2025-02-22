@@ -1,12 +1,16 @@
 'use strict';
 const sinon = require("sinon");
-const { assert } = require('chai');
 const ldapjs = require('ldapjs');
 const ldap = require('../lib');
 const EventEmitter = require("events");
 const { Attribute } = require("../lib");
 
 describe('LdapClient', () => {
+    let assert;
+    before(async () => {
+        assert = (await import('chai')).assert;
+    });
+
     describe('event emitter tests', () => {
         it('should add event listener', () => {
             sinon.stub(ldapjs, 'createClient').returns(new EventEmitter());
