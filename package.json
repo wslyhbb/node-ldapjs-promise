@@ -3,6 +3,7 @@
   "version": "3.0.9",
   "description": "A simple promise wrapper around ldapjs.",
   "main": "lib/index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "npm run test:unit && npm run test:tsd",
     "test:unit": "mocha",

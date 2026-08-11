@@ -16,8 +16,6 @@ This is a simple wrapper around [ldapjs] for basic operations.
 
 ## Usage
 
-For full docs, head on over to <http://ldapjs.org>.
-
 The methods signatures are the same except instead of callbacks they return promises.
 
 ```javascript

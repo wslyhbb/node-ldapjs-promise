@@ -1,12 +1,12 @@
-import {expectType} from 'tsd'
-import {
-  createClient,
+import { expectType } from 'tsd'
+import type {
   Client,
   Change,
   SearchCallbackResponse,
   SearchEntry,
   SearchReference
 } from '.'
+import { createClient } from '.'
 
 expectType<Client>(createClient())
 
