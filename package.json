@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/wslyhbb/node-ldapjs-promise#readme",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   },
   "dependencies": {
     "abstract-logging": "^2.0.1",
@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/ldapjs": "^3.0.6",
     "chai": "^6.2.1",
-    "mocha": "^11.7.5",
+    "mocha": "^12.0.0",
     "nyc": "^18.0.0",
     "sinon": "^22.1.0",
     "tsd": "^0.33.0"
