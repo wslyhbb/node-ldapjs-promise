@@ -15,3 +15,5 @@ coverage/
 
 ### OSX template
 .DS_Store
+
+/public/

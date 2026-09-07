@@ -1,14 +1,8 @@
 /// <reference types="node" />
 
 import {
-  Client
-} from './types'
-import {
-  createClient as _createClient
-} from 'ldapjs'
+  Client,
+  createClient as _createClient,
+} from './types';
 
-export * from './types'
-
-export declare const createClient: {
-  (...args: Parameters<typeof _createClient>): Client
-}
+export * from './types';

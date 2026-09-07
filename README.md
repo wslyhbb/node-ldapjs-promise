@@ -8,7 +8,9 @@ LDAP Client and Server API for node.js with Promise support.
 
 [ldapjs]: https://www.npmjs.com/package/ldapjs
 
-This is a simple wrapper around [ldapjs] for basic operations.
+Originally this was a promisfyied [ldapjs] library.  Due to [ldapjs] being
+decommissioned, the core was merged into the project so the core can be
+directly modified.
 
 ## Installation
 
@@ -27,41 +29,39 @@ const client = ldap.createClient({
 await client.bind(dn, password);
 ```
 
-The [ldapjs] authors made the search method a special method that returns an
-<code>EventEmitter</code> so the user can handle each
-<code>searchEntry</code> as it is returned. Since this library is just wrapping
-[ldapjs], it does not make any assumptions and returns the same <code>EventEmitter</code>.
+The search method returns an <code>EventEmitter</code> so the user can handle
+each <code>searchEntry</code> as it is returned.
 
 In order to await all of the results you could:
 ```javascript
-const results = client.search(base, options, controls).then(response => {
-    const entries = [];
-    let referrals = [];
-    return new Promise((resolve, reject) => {
-        response.on('searchEntry', entry => {
-            entries.push(entry);
-        });
-        response.on('searchReference', referral => {
-            referrals = referrals.concat(referral.uris);
-        });
-        response.on('error', error => {
-            return reject(error);
-        })
-        response.on('end', result => {
-            if (result.status !== 0) {
-                return reject(result.status);
-            }
+const response = client.search(base, options, controls);
+const entries = [];
+let referrals = [];
+const results = await new Promise((resolve, reject) => {
+    response.on('searchEntry', entry => {
+        entries.push(entry);
+    });
+    response.on('searchReference', referral => {
+        referrals = referrals.concat(referral.uris);
+    });
+    response.on('error', error => {
+        return reject(error);
+    })
+    response.on('end', result => {
+        if (result.status !== 0) {
+            return reject(result.status);
+        }
 
-            return resolve({
-                entries: entries,
-                referrals: referrals
-            });
+        return resolve({
+            entries: entries,
+            referrals: referrals
         });
     });
 });
 ```
-If this is exactly what you want, an extension method <code>searchReturnAll</code> has been added
-that does this.
+
+If this is exactly what you want, an extension method
+<code>searchReturnAll</code> does this.
 ```javascript
 const results = await client.searchReturnAll(base, options, controls);
 for (let entry of results.entries) {

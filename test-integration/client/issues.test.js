@@ -1,0 +1,87 @@
+'use strict';
+const assert = require('node:assert');
+const ldapjs = require('../../lib');
+
+const SCHEME = process.env.SCHEME || 'ldap';
+const HOST = process.env.HOST || '127.0.0.1';
+const PORT = process.env.PORT || 389;
+
+const baseURL = `${SCHEME}://${HOST}:${PORT}`;
+
+describe('LDAP issues', function () {
+    it('modifyDN with long name (issue #480)', async function () {
+    // 2023-08-15: disabling this 265 character string until a bug can be
+    // fixed in OpenLDAP. See https://github.com/ldapjs/docker-test-openldap/blob/d48bc2fb001b4ed9a152715ced4a2cb120439ec4/bootstrap/slapd-init.sh#L19-L31.
+    // const longStr = 'a292979f2c86d513d48bbb9786b564b3c5228146e5ba46f404724e322544a7304a2b1049168803a5485e2d57a544c6a0d860af91330acb77e5907a9e601ad1227e80e0dc50abe963b47a004f2c90f570450d0e920d15436fdc771e3bdac0487a9735473ed3a79361d1778d7e53a7fb0e5f01f97a75ef05837d1d5496fc86968ff47fcb64'
+
+    // 2023-08-15: this 140 character string satisfies the original issue
+    // (https://github.com/ldapjs/node-ldapjs/issues/480) and avoids a bug
+    // in OpenLDAP 2.5.
+        const longStr = '292979f2c86d513d48bbb9786b564b3c5228146e5ba46f404724e322544a7304a2b1049168803a5485e2d57a544c6a0d860af91330acb77e5907a9e601ad1227e80e0dc50ab';
+        const targetDN = 'cn=Turanga Leela,ou=people,dc=planetexpress,dc=com';
+        const client = ldapjs.createClient({ url: baseURL });
+        client.on('error', () => { });
+
+        try {
+            await client.bind('cn=admin,dc=planetexpress,dc=com', 'GoodNewsEveryone');
+            const renamedDN = `cn=${longStr},ou=people,dc=planetexpress,dc=com`;
+            const firstResponse = await client.modifyDN(targetDN, renamedDN);
+            assert.ok(firstResponse);
+            assert.strictEqual(firstResponse.status, 0);
+            const secondResponse = await client.modifyDN(renamedDN, targetDN);
+            assert.ok(secondResponse);
+        } finally {
+            await client.unbind();
+        }
+    });
+
+    it('whois works correctly (issue #370)', async function () {
+        const client = ldapjs.createClient({ url: baseURL });
+        client.on('error', () => { });
+        try {
+            await client.bind('cn=Philip J. Fry,ou=people,dc=planetexpress,dc=com', 'fry');
+            const result = await client.exop('1.3.6.1.4.1.4203.1.11.3');
+            assert.ok(result.value);
+            assert.strictEqual(result.value, 'dn:cn=Philip J. Fry,ou=people,dc=planetexpress,dc=com');
+            assert.ok(result.response);
+            assert.strictEqual(result.response.status, 0);
+        } finally {
+            await client.unbind();
+        }
+    });
+
+    it('can access large groups (issue #582)', async function () {
+        const client = ldapjs.createClient({ url: baseURL });
+        client.on('error', () => { });
+        try {
+            await client.bind('cn=admin,dc=planetexpress,dc=com ', 'GoodNewsEveryone');
+            const searchOpts = {
+                scope: 'sub',
+                filter: '(&(objectClass=group)(cn=large_group))'
+            };
+            const response = await client.search('ou=large_ou,dc=planetexpress,dc=com', searchOpts);
+            const results = [];
+            let endResult;
+
+            await new Promise((resolve, reject) => {
+                response.on('searchEntry', entry => results.push(entry));
+                response.once('error', reject);
+                response.once('end', result => {
+                    endResult = result;
+                    resolve();
+                });
+            });
+
+            assert.strictEqual(endResult.status, 0);
+            assert.strictEqual(results.length, 1);
+            assert.ok(results[0].attributes);
+            const memberAttr = results[0].attributes.find(attribute => attribute.type === 'member');
+            assert.ok(memberAttr);
+            assert.ok(memberAttr.values);
+            assert.ok(Array.isArray(memberAttr.values));
+            assert.strictEqual(memberAttr.values.length, 2000);
+        } finally {
+            await client.unbind();
+        }
+    });
+});
