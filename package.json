@@ -1,13 +1,18 @@
 {
   "name": "ldapjs-promise",
-  "version": "3.0.10",
-  "description": "A simple promise wrapper around ldapjs.",
+  "version": "4.0.0",
+  "description": "LDAP client and server APIs",
   "main": "lib/index.js",
   "types": "index.d.ts",
   "scripts": {
     "test": "npm run test:unit && npm run test:tsd",
-    "test:unit": "mocha",
-    "test:tsd": "tsd"
+    "test:unit": "mocha --recursive",
+    "test:integration": "mocha --recursive test-integration",
+    "test:tsd": "tsd",
+    "coverage": "nyc npm run test:unit",
+    "lint": "eslint . --fix",
+    "lint:ci": "eslint .",
+    "docs": "node scripts/build-docs.js"
   },
   "repository": {
     "type": "git",
@@ -27,16 +32,38 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
+    "@ldapjs/asn1": "^2.0.0",
+    "@ldapjs/attribute": "^1.0.0",
+    "@ldapjs/change": "^1.0.0",
+    "@ldapjs/controls": "^2.1.0",
+    "@ldapjs/dn": "^1.1.0",
+    "@ldapjs/filter": "^2.1.1",
+    "@ldapjs/messages": "^1.3.0",
+    "@ldapjs/protocol": "^1.2.1",
     "abstract-logging": "^2.0.1",
-    "ldapjs": "^3.0.7"
+    "assert-plus": "^1.0.0",
+    "backoff": "^2.5.0",
+    "once": "^1.4.0",
+    "verror": "^1.10.1"
   },
   "devDependencies": {
     "@types/ldapjs": "^3.0.6",
-    "chai": "^6.2.1",
+    "eslint": "^10.10.0",
+    "front-matter": "^4.0.2",
+    "get-port": "^7.2.0",
+    "github-slugger": "^2.0.0",
+    "highlight.js": "^11.12.0",
+    "marked": "^18.0.12",
     "mocha": "^12.0.0",
     "nyc": "^18.0.0",
-    "sinon": "^22.1.0",
     "tsd": "^0.33.0"
+  },
+  "nyc": {
+    "check-coverage": true,
+    "lines": 76,
+    "functions": 80,
+    "statements": 76,
+    "branches": 61
   },
   "tsd": {
     "compilerOptions": {
