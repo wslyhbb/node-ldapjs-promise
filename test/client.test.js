@@ -532,8 +532,8 @@ describe('LdapClient', function () {
             [attribute]: Buffer.from([binary])
         };
 
-        const originalSendSocket = client._sendSocket.bind(client);
-        client._sendSocket = function (message, expect, emitter, callback) {
+        const originalSend = client._send.bind(client);
+        client._send = async function (message, expect, emitter, _bypass) {
             const data = message.toBer().buffer;
             const reader = new BerReader(data);
             assert.strictEqual(data.byteLength, 48);
@@ -548,7 +548,7 @@ describe('LdapClient', function () {
             assert.strictEqual(reader.readByte(), 0x4);
             assert.strictEqual(reader.readByte(), 1);
             assert.strictEqual(reader.readByte(), binary);
-            return originalSendSocket(message, expect, emitter, callback);
+            return originalSend.call(this, message, expect, emitter, _bypass);
         };
 
         try {
@@ -556,7 +556,7 @@ describe('LdapClient', function () {
             assert.ok(res);
             assert.strictEqual(res.status, 0);
         } finally {
-            client._sendSocket = originalSendSocket;
+            client._send = originalSend;
         }
     });
 
@@ -1821,8 +1821,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('unbind error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1841,8 +1841,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('abandon error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1859,8 +1859,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('add error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1880,8 +1880,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('delete error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1898,8 +1898,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('modify error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1923,8 +1923,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('modify DN error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1941,8 +1941,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('search error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -2015,9 +2015,9 @@ describe('LdapClient', function () {
             };
 
             try {
-                clt._send = function (message, expect, emitter, callback) {
-                    callback(null, emitter);
+                clt._send = function (message, expect, emitter) {
                     process.nextTick(() => emitter.emit('end'));
+                    return Promise.resolve(emitter);
                 };
 
                 await clt.starttls({});
@@ -2045,9 +2045,9 @@ describe('LdapClient', function () {
             };
 
             try {
-                clt._send = function (message, expect, emitter, callback) {
-                    callback(null, emitter);
-                    setImmediate(() => emitter.emit('end'));
+                clt._send = function (message, expect, emitter) {
+                    process.nextTick(() => emitter.emit('end'));
+                    return Promise.resolve(emitter);
                 };
                 await clt.starttls({});
                 assert.fail('Expected start TLS to throw an error');

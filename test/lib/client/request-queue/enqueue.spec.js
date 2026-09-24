@@ -25,7 +25,12 @@ describe('enqueue', () => {
       _frozen: false,
       timeout: 0
     };
-    const result = enqueue.call(q, 'foo', 'bar', 'baz', 'bif');
+    const result = enqueue.call(q, {
+      message: 'foo',
+      expect: 'bar',
+      emitter: 'baz',
+      cb: 'bif'
+    });
     assert.strictEqual(result, true);
   });
 
@@ -46,7 +51,12 @@ describe('enqueue', () => {
       timeout: 100,
       _timer: null
     };
-    const result = enqueue.call(q, 'foo', 'bar', 'baz', 'bif');
+    const result = enqueue.call(q, {
+      message: 'foo',
+      expect: 'bar',
+      emitter: 'baz',
+      cb: 'bif'
+    });
     assert.strictEqual(result, true);
   });
 
@@ -67,9 +77,14 @@ describe('enqueue', () => {
       timeout: 5,
       _timer: 123,
       freeze () { assert.strictEqual(true, true); },
-      purge () { assert.strictEqual(true, true); }
+      async purge () { return []; }
     };
-    const result = enqueue.call(q, 'foo', 'bar', 'baz', 'bif');
+    const result = enqueue.call(q, {
+      message: 'foo',
+      expect: 'bar',
+      emitter: 'baz',
+      cb: 'bif'
+    });
     assert.strictEqual(result, true);
   });
 });

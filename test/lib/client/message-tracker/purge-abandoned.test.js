@@ -6,7 +6,7 @@ const purgeAbandoned = require('../../../../lib/client/message-tracker/purge-aba
 describe('purgeAbandoned', () => {
   it('should clear the queue if only one message is present', () => {
     const abandoned = new Map();
-    abandoned.set(1, { age: 2, cb });
+    abandoned.set(1, { age: 2, reject: cb });
 
     purgeAbandoned(2, abandoned);
 
@@ -20,8 +20,8 @@ describe('purgeAbandoned', () => {
 
   it('should clear the queue if multiple messages are present', () => {
     const abandoned = new Map();
-    abandoned.set(1, { age: 2, cb });
-    abandoned.set(2, { age: 3, cb });
+    abandoned.set(1, { age: 2, reject: cb });
+    abandoned.set(2, { age: 3, reject: cb });
 
     purgeAbandoned(4, abandoned);
 
@@ -35,7 +35,7 @@ describe('purgeAbandoned', () => {
 
   it('should handle the message ID wrapping around', () => {
     const abandoned = new Map();
-    abandoned.set(MAX_MSGID - 1, { age: MAX_MSGID, cb });
+    abandoned.set(MAX_MSGID - 1, { age: MAX_MSGID, reject: cb });
 
     // The abandon message used MAX_MSGID, so this is the first message in the new sequence.
     purgeAbandoned(1, abandoned);
@@ -50,7 +50,7 @@ describe('purgeAbandoned', () => {
 
   it('should not clear the queue if the window is not met', () => {
     const abandoned = new Map();
-    abandoned.set(1, { age: 2, cb });
+    abandoned.set(1, { age: 2, reject: cb });
 
     purgeAbandoned(1, abandoned);
 

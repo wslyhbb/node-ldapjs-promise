@@ -3,16 +3,17 @@ const assert = require('node:assert');
 const purge = require('../../../../lib/client/request-queue/purge');
 
 describe('purge', () => {
-  it('should flush the queue with timeout errors', () => {
+  it('should flush the queue with timeout errors', async () => {
     const q = {
-      flush (func) {
-        func('a', 'b', 'c', (err) => {
-          assert.ok(err);
-          assert.strictEqual(err.name, 'TimeoutError');
-          assert.strictEqual(err.message, 'request queue timeout');
-        });
+      async flush () {
+        return [{ message: 'a', cb: () => {} }];
       }
     };
-    purge.call(q);
+    const timedOut = await purge.call(q);
+    assert.strictEqual(timedOut.length, 1);
+    assert.deepStrictEqual(timedOut[0].request, { message: 'a', cb: timedOut[0].request.cb });
+    assert.ok(timedOut[0].error);
+    assert.strictEqual(timedOut[0].error.name, 'TimeoutError');
+    assert.strictEqual(timedOut[0].error.message, 'request queue timeout');
   });
 });

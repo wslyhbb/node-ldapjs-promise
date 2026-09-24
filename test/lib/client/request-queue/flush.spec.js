@@ -19,12 +19,12 @@ describe('flush', () => {
     assert.equal(q._timer, null);
   })
 
-  it('should invoke callback with parameters', () => {
+  it('should return queued requests', async () => {
     const req = {
       message: 'foo',
       expect: 'bar',
       emitter: 'baz',
-      cb: theCB
+      cb: () => {}
     };
     const q = {
       _timer: 123,
@@ -37,14 +37,8 @@ describe('flush', () => {
         }
       }
     }
-    flush.call(q, (message, expect, emitter, cb) => {
-      assert.equal(message, 'foo')
-      assert.equal(expect, 'bar')
-      assert.equal(emitter, 'baz')
-      assert.equal(cb, theCB)
-    });
+    const requests = await flush.call(q);
+    assert.deepStrictEqual(requests, [req]);
     assert.equal(q._timer, null);
-
-    function theCB () {}
   });
 });
