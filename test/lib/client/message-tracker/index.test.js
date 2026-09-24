@@ -53,18 +53,18 @@ describe('message-tracker', () => {
   describe('#fetch', () => {
     it('should return handler for fetched message', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      tracker.track({}, handler);
-      assert.strictEqual(tracker.fetch(1).callback, handler);
+      tracker.track({}, { handler });
+      assert.strictEqual(tracker.fetch(1).handler, handler);
 
       function handler () {}
     });
 
     it('should return handler for fetched abandoned message', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      tracker.track({}, handler);
-      tracker.track({ abandon: 'message' }, () => {});
+      tracker.track({}, { handler });
+      tracker.track({ abandon: 'message' }, { handler: () => {} });
       tracker.abandon(1);
-      assert.strictEqual(tracker.fetch(1).callback, handler);
+      assert.strictEqual(tracker.fetch(1).handler, handler);
 
       function handler () {}
     });
@@ -82,9 +82,9 @@ describe('message-tracker', () => {
       function handler1 () {}
       function handler2 () {}
 
-      tracker.track({}, handler1);
-      tracker.track({}, handler2);
-      tracker.purge((msgID, handler) => calls.push([msgID, handler]));
+      tracker.track({}, { handler: handler1 });
+      tracker.track({}, { handler: handler2 });
+      tracker.purge().forEach(({ msgID, handler }) => calls.push([msgID, handler]));
 
       assert.deepStrictEqual(calls, [[1, handler1], [2, handler2]]);
     });
@@ -93,15 +93,15 @@ describe('message-tracker', () => {
   describe('#remove', () => {
     it('should remove from the current track', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      tracker.track({}, () => {});
+      tracker.track({}, { handler: () => {} });
       tracker.remove(1);
       assert.strictEqual(tracker.pending, 0);
     });
 
     it('should remove from the abandoned track', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      tracker.track({}, () => {});
-      tracker.track({ abandon: 'message' }, () => {});
+      tracker.track({}, { handler: () => {} });
+      tracker.track({ abandon: 'message' }, { handler: () => {} });
       tracker.abandon(1);
       tracker.remove(1);
       assert.strictEqual(tracker.pending, 1);
@@ -114,10 +114,10 @@ describe('message-tracker', () => {
       const message = {};
       function handler () {}
 
-      tracker.track(message, handler);
+      tracker.track(message, { handler });
 
       assert.deepStrictEqual(message, { messageId: 1 });
-      assert.strictEqual(tracker.fetch(1).callback, handler);
+      assert.strictEqual(tracker.fetch(1).handler, handler);
     });
   });
 });

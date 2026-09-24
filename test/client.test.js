@@ -36,7 +36,7 @@ describe('LdapClient', function () {
 
             server.bind(BIND_DN, function (req, res, next) {
                 if (req.credentials !== BIND_PW) {
-                  return next(new ldap.InvalidCredentialsError('Invalid password'));
+                    return next(new ldap.InvalidCredentialsError('Invalid password'));
                 }
 
                 res.end();
@@ -105,15 +105,15 @@ describe('LdapClient', function () {
                 } else if (req.dn.equals('cn=bin,' + SUFFIX)) {
                     const attributes = [
                         new Attribute({
-                          type: 'foo;binary', values: ['wr0gKyDCvCA9IMK+']
-                      }),
-                      new Attribute({
-                          type: 'gb18030',
-                          values: [Buffer.from([0xB5, 0xE7, 0xCA, 0xD3, 0xBB, 0xFA])]
-                      }),
-                      new Attribute({
-                          type: 'objectclass', values: ['binary']
-                      })
+                            type: 'foo;binary', values: ['wr0gKyDCvCA9IMK+']
+                        }),
+                        new Attribute({
+                            type: 'gb18030',
+                            values: [Buffer.from([0xB5, 0xE7, 0xCA, 0xD3, 0xBB, 0xFA])]
+                        }),
+                        new Attribute({
+                            type: 'objectclass', values: ['binary']
+                        })
                     ];
                     res.send(res.createSearchEntry({
                         objectName: req.dn,
@@ -161,7 +161,7 @@ describe('LdapClient', function () {
                 const min = 0;
                 const max = 1000;
 
-                function sendResults (start, end) {
+                function sendResults(start, end) {
                     start = (start < min) ? min : start;
                     end = (end > max || end < min) ? max : end;
                     let i;
@@ -231,7 +231,7 @@ describe('LdapClient', function () {
                     });
                     o = ((parseInt(o, 36) + 1).toString(36)).replace(/0/g, 'a');
                 }
-                function sendResults (start, end, sortBy, sortDesc) {
+                function sendResults(start, end, sortBy, sortDesc) {
                     start = (start < min) ? min : start;
                     end = (end > max || end < min) ? max : end;
                     const sorted = results.sort((a, b) => {
@@ -277,16 +277,16 @@ describe('LdapClient', function () {
                 let cookie = null;
                 req.controls.forEach(function (control) {
                     if (control.type === ldap.PagedResultsControl.OID) {
-                      cookie = control.value.cookie;
+                        cookie = control.value.cookie;
                     }
                 });
                 if (cookie && Buffer.isBuffer(cookie) && cookie.length === 0) {
                     res.send({
-                      dn: util.format('o=result, cn=pagederr'),
-                      attributes: {
-                          o: 'result',
-                          objectclass: ['pagedResult']
-                      }
+                        dn: util.format('o=result, cn=pagederr'),
+                        attributes: {
+                            o: 'result',
+                            objectclass: ['pagedResult']
+                        }
                     });
                     res.controls.push(new ldap.PagedResultsControl({
                         value: {
@@ -409,18 +409,30 @@ describe('LdapClient', function () {
             });
         });
 
+        it('adds a child logger method when one is not supplied', async function () {
+            const log = {};
+            const newClient = ldap.createClient({
+                socketPath: getSock(),
+                log
+            });
+
+            assert.strictEqual(typeof log.child, 'function');
+            assert.strictEqual(log.child(), log);
+            await newClient.destroy();
+        });
+
         it('url array is correctly assigned', async function () {
             const unusedPortNumber = await getPort();
             const newClient = ldap.createClient({
                 url: [
-                  `ldap://127.0.0.1:${unusedPortNumber}`,
-                  `ldap://127.0.0.2:${unusedPortNumber}`
+                    `ldap://127.0.0.1:${unusedPortNumber}`,
+                    `ldap://127.0.0.2:${unusedPortNumber}`
                 ],
                 connectTimeout: 1
             });
-            newClient.on('connectTimeout', () => {});
-            newClient.on('connectError', () => {});
-            newClient.on('connectRefused', () => {});
+            newClient.on('connectTimeout', () => { });
+            newClient.on('connectError', () => { });
+            newClient.on('connectRefused', () => { });
 
             assert.strictEqual(newClient.urls.length, 2);
             await newClient.destroy();
@@ -532,8 +544,8 @@ describe('LdapClient', function () {
             [attribute]: Buffer.from([binary])
         };
 
-        const originalSendSocket = client._sendSocket.bind(client);
-        client._sendSocket = function (message, expect, emitter, callback) {
+        const originalSend = client._send.bind(client);
+        client._send = async function (message, expect, emitter, _bypass) {
             const data = message.toBer().buffer;
             const reader = new BerReader(data);
             assert.strictEqual(data.byteLength, 48);
@@ -548,7 +560,7 @@ describe('LdapClient', function () {
             assert.strictEqual(reader.readByte(), 0x4);
             assert.strictEqual(reader.readByte(), 1);
             assert.strictEqual(reader.readByte(), binary);
-            return originalSendSocket(message, expect, emitter, callback);
+            return originalSend.call(this, message, expect, emitter, _bypass);
         };
 
         try {
@@ -556,7 +568,7 @@ describe('LdapClient', function () {
             assert.ok(res);
             assert.strictEqual(res.status, 0);
         } finally {
-            client._sendSocket = originalSendSocket;
+            client._send = originalSend;
         }
     });
 
@@ -830,9 +842,10 @@ describe('LdapClient', function () {
                         currentSearchRequest.messageId);
                 }
             }
-            
+
             const res = await client.search('cn=paged', {
-                paged: { pageSize: 100 } });
+                paged: { pageSize: 100 }
+            });
             await new Promise((resolve, reject) => {
                 res.on('searchEntry', entryListener);
                 res.on('searchRequest', (searchRequest) => {
@@ -873,7 +886,7 @@ describe('LdapClient', function () {
                     }
                     return cb();
                 }
-                
+
                 res.on('page', pageListener);
                 res.on('error', (err) => reject(err));
                 res.on('end', function () {
@@ -885,10 +898,10 @@ describe('LdapClient', function () {
 
         it('paged - no support (err handled)', async function () {
             const res = await client.search(SUFFIX, {
-              paged: { pageSize: 100 }
+                paged: { pageSize: 100 }
             });
             await new Promise((resolve) => {
-                res.on('pageError', () => {});
+                res.on('pageError', () => { });
                 res.on('end', function () {
                     assert.ok(true);
                     resolve();
@@ -984,14 +997,14 @@ describe('LdapClient', function () {
                     reverseOrder: false
                 }
             });
-            const res = await client.search('cn=sssvlv', {}, sssrcontrol);            
+            const res = await client.search('cn=sssvlv', {}, sssrcontrol);
             await new Promise((resolve) => {
                 res.on('searchEntry', function (entry) {
                     assert.ok(entry);
                     assert.ok(entry instanceof ldap.SearchEntry);
                     assert.ok(entry.attributes);
                     assert.ok(entry.attributes.length);
-                    
+
                     if (preventry != null) {
                         assert.ok(entry.attributes[0]._vals[0] >= preventry.attributes[0]._vals[0]);
                     }
@@ -1024,7 +1037,7 @@ describe('LdapClient', function () {
                     assert.ok(entry instanceof ldap.SearchEntry);
                     assert.ok(entry.attributes);
                     assert.ok(entry.attributes.length);
-                    
+
                     if (preventry != null) {
                         assert.ok(entry.attributes[0]._vals[0] <= preventry.attributes[0]._vals[0]);
                     }
@@ -1040,7 +1053,7 @@ describe('LdapClient', function () {
                 });
             });
         });
-        
+
         it.skip('vlv - first page', async function () {
             // This test is disabled.
             // See https://github.com/ldapjs/node-ldapjs/pull/797#issuecomment-1094132289
@@ -1088,7 +1101,7 @@ describe('LdapClient', function () {
                 });
             });
         });
-        
+
         it.skip('vlv - last page', async function () {
             // This test is disabled.
             // See https://github.com/ldapjs/node-ldapjs/pull/797#issuecomment-1094132289
@@ -1236,7 +1249,7 @@ describe('LdapClient', function () {
                 assert.strictEqual(entry.attributes[0].type, 'foo;binary');
                 assert.strictEqual(entry.attributes[0].values[0], expect.toString('base64'));
                 assert.strictEqual(entry.attributes[0].buffers[0].toString('base64'),
-                expect.toString('base64'));
+                    expect.toString('base64'));
 
                 assert.ok(entry.attributes[1].type, 'gb18030');
                 assert.strictEqual(entry.attributes[1].buffers.length, 1);
@@ -1323,9 +1336,9 @@ describe('LdapClient', function () {
         });
     });
 
-  it('idle timeout', async function () {
+    it('idle timeout', async function () {
         client.idleTimeout = 250;
-        function premature () {
+        function premature() {
             assert.fail('idle fired too early');
         }
         client.on('idle', premature);
@@ -1371,7 +1384,7 @@ describe('LdapClient', function () {
         });
     });
 
-  it('setup reconnect', async function () {
+    it('setup reconnect', async function () {
         const rClient = ldap.createClient({
             connectTimeout: parseInt(LDAP_CONNECT_TIMEOUT, 10),
             socketPath: socketPath,
@@ -1592,11 +1605,11 @@ describe('LdapClient', function () {
             });
         }
 
-        function error1 (error) {
+        function error1(error) {
             assert.strictEqual(error.name, 'BusyError');
         }
 
-        function error2 () {
+        function error2() {
             assert.fail('should not get error');
         }
     });
@@ -1607,7 +1620,7 @@ describe('LdapClient', function () {
             url: `ldap://0.0.0.0:${unusedPortNumber}`
         });
 
-        client.on('connectRefused', () => {});
+        client.on('connectRefused', () => { });
 
         try {
             const res = await client.bind('cn=root', 'secret');
@@ -1629,7 +1642,7 @@ describe('LdapClient', function () {
             timeout: 1
         });
 
-        client.on('connectTimeout', () => {});
+        client.on('connectTimeout', () => { });
 
         let done = false;
 
@@ -1685,7 +1698,7 @@ describe('LdapClient', function () {
             });
 
             const bindPromise = client.bind('cn=root', 'secret')
-                .catch(() => {});
+                .catch(() => { });
             await Promise.all([connectTimeoutPromise, bindPromise]);
         });
 
@@ -1719,7 +1732,7 @@ describe('LdapClient', function () {
             });
 
             const bindPromise = client.bind('cn=root', 'secret')
-                .catch(() => {});
+                .catch(() => { });
             await Promise.all([errorPromise, bindPromise]);
         });
 
@@ -1733,7 +1746,7 @@ describe('LdapClient', function () {
                 assert.fail(err);
             });
             const connectRefusedPromise = new Promise((resolve, reject) => {
-                client.on('connectRefused', async(err) => {
+                client.on('connectRefused', async (err) => {
                     try {
                         assert.ok(err);
                         assert.ok(err instanceof Error);
@@ -1750,7 +1763,7 @@ describe('LdapClient', function () {
             });
 
             const bindPromise = client.bind('cn=root', 'secret')
-                .catch(() => {});
+                .catch(() => { });
             await Promise.all([connectRefusedPromise, bindPromise]);
         });
 
@@ -1778,7 +1791,7 @@ describe('LdapClient', function () {
             });
 
             const bindPromise = client.bind('cn=root', 'secret')
-                .catch(() => {});
+                .catch(() => { });
             await Promise.all([errorPromise, bindPromise]);
         });
     });
@@ -1821,8 +1834,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('unbind error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1841,8 +1854,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('abandon error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1859,8 +1872,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('add error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1880,8 +1893,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('delete error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1898,8 +1911,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('modify error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1923,8 +1936,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('modify DN error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1941,8 +1954,8 @@ describe('LdapClient', function () {
             const thrownError = new Error('search error');
 
             const originalSend = client._send;
-            client._send = function (message, expect, emitter, callback) {
-                callback(thrownError);
+            client._send = async function () {
+                throw thrownError;
             };
 
             try {
@@ -1972,7 +1985,7 @@ describe('LdapClient', function () {
                 assert.deepStrictEqual(entry.attributes[1].values, ['testy']);
             });
         });
-        
+
         it('should fail to search and return all', async function () {
             const thrownError = new Error('search all error');
 
@@ -2015,9 +2028,9 @@ describe('LdapClient', function () {
             };
 
             try {
-                clt._send = function (message, expect, emitter, callback) {
-                    callback(null, emitter);
+                clt._send = function (message, expect, emitter) {
                     process.nextTick(() => emitter.emit('end'));
+                    return Promise.resolve(emitter);
                 };
 
                 await clt.starttls({});
@@ -2045,9 +2058,9 @@ describe('LdapClient', function () {
             };
 
             try {
-                clt._send = function (message, expect, emitter, callback) {
-                    callback(null, emitter);
-                    setImmediate(() => emitter.emit('end'));
+                clt._send = function (message, expect, emitter) {
+                    process.nextTick(() => emitter.emit('end'));
+                    return Promise.resolve(emitter);
                 };
                 await clt.starttls({});
                 assert.fail('Expected start TLS to throw an error');
@@ -2074,7 +2087,7 @@ describe('LdapClient', function () {
             const filter = '(&(objectcategory=user)(sAMAccountName=test.user))';
             const expectedUser = {
                 attributes: [
-                    { type: 'cn', values: [ 'test.user' ] }
+                    { type: 'cn', values: ['test.user'] }
                 ]
             };
 
@@ -2109,7 +2122,7 @@ describe('LdapClient', function () {
             const username = 'test.user';
             const expectedUser = {
                 attributes: [
-                    { type: 'cn', values: [ 'test.user' ] }
+                    { type: 'cn', values: ['test.user'] }
                 ]
             };
 
@@ -2174,8 +2187,8 @@ describe('LdapClient', function () {
             const username = 'test.user';
             const expectedUser = {
                 attributes: [
-                    { type: 'cn', values: [ 'test.user' ] },
-                    { type: 'memberOf', values: [ 'test.group' ] }
+                    { type: 'cn', values: ['test.user'] },
+                    { type: 'memberOf', values: ['test.group'] }
                 ]
             };
 
@@ -2188,7 +2201,7 @@ describe('LdapClient', function () {
                 });
                 return Promise.resolve(emitter);
             };
-            
+
             try {
                 let isInGroup = await clt.userInGroup('', username, 'test.group');
                 assert.strictEqual(isInGroup, true);

@@ -18,14 +18,19 @@ describe('enqueue', () => {
             message: 'foo',
             expect: 'bar',
             emitter: 'baz',
-            cb: 'bif'
+            reject: 'bif'
           });
         }
       },
       _frozen: false,
       timeout: 0
     };
-    const result = enqueue.call(q, 'foo', 'bar', 'baz', 'bif');
+    const result = enqueue.call(q, {
+      message: 'foo',
+      expect: 'bar',
+      emitter: 'baz',
+      reject: 'bif'
+    });
     assert.strictEqual(result, true);
   });
 
@@ -38,7 +43,7 @@ describe('enqueue', () => {
             message: 'foo',
             expect: 'bar',
             emitter: 'baz',
-            cb: 'bif'
+            reject: 'bif'
           });
         }
       },
@@ -46,7 +51,12 @@ describe('enqueue', () => {
       timeout: 100,
       _timer: null
     };
-    const result = enqueue.call(q, 'foo', 'bar', 'baz', 'bif');
+    const result = enqueue.call(q, {
+      message: 'foo',
+      expect: 'bar',
+      emitter: 'baz',
+      reject: 'bif'
+    });
     assert.strictEqual(result, true);
   });
 
@@ -59,7 +69,7 @@ describe('enqueue', () => {
             message: 'foo',
             expect: 'bar',
             emitter: 'baz',
-            cb: 'bif'
+            reject: 'bif'
           });
         }
       },
@@ -67,9 +77,41 @@ describe('enqueue', () => {
       timeout: 5,
       _timer: 123,
       freeze () { assert.strictEqual(true, true); },
-      purge () { assert.strictEqual(true, true); }
+      async purge () { return []; }
     };
-    const result = enqueue.call(q, 'foo', 'bar', 'baz', 'bif');
+    const result = enqueue.call(q, {
+      message: 'foo',
+      expect: 'bar',
+      emitter: 'baz',
+      reject: 'bif'
+    });
     assert.strictEqual(result, true);
+  });
+
+  it('rejects queued requests when the queue times out', async () => {
+    const timeout = new Promise((resolve, reject) => {
+      const q = {
+        _queue: {
+          size: 0,
+          add () {}
+        },
+        _frozen: false,
+        timeout: 1,
+        _timer: 123,
+        freeze () {
+          this._frozen = true;
+        },
+        async purge () {
+          return [{
+            request: { reject },
+            error: new Error('request queue timeout')
+          }];
+        }
+      };
+
+      enqueue.call(q, { reject });
+    });
+
+    await assert.rejects(timeout, { message: 'request queue timeout' });
   });
 });
