@@ -18,9 +18,11 @@ with HTTP services in node and [restify](http://restify.com).
 </div>
 
 ```js
-const ldap = require('ldapjs-promise');
+import {
+  createServer
+} from 'ldapjs-promise';
 
-const server = ldap.createServer();
+const server = createServer();
 
 server.search('o=example', (req, res, next) => {
   const obj = {
@@ -73,7 +75,7 @@ API documentation is:
 |[Client API](client.html)  |Reference for implementing LDAP clients.   |
 |[DN API](dn.html)          |API reference for the DN class.            |
 |[Filter API](filters.html) |API reference for LDAP search filters.     |
-|[Error API](errors.html)   |Listing of all ldapjs Error objects.       |
+|[Error API](errors.html)   |Listing of all ldapjs-promise Error objects.       |
 |[Examples](examples.html)  |Collection of sample/getting started code. |
 
 # More information

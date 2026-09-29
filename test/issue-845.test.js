@@ -1,9 +1,10 @@
-'use strict';
-const assert = require('node:assert');
-const { SearchResultEntry, SearchRequest } = require('@ldapjs/messages');
-const ldapjs = require('../');
+import { strictEqual } from 'node:assert';
+import messages from '@ldapjs/messages';
+import { createServer, createClient } from '../lib/index.js';
 
-const server = ldapjs.createServer();
+const { SearchResultEntry, SearchRequest } = messages;
+
+const server = createServer();
 
 const SUFFIX = '';
 const directory = {
@@ -48,7 +49,7 @@ describe('issue 845', () => {
         server.listen(0, '127.0.0.1', (err) => {
             if (err) return done(err);
 
-            client = ldapjs.createClient({ url: [server.url] });
+            client = createClient({ url: [server.url] });
             searchOpts = {
                 filter: '(&(objectClass=*))',
                 scope: 'sub',
@@ -78,7 +79,7 @@ describe('issue 845', () => {
                 // This should be fixed in a revamp of the server code.
                 // ~ jsumners 2023-03-08
                 try {
-                    assert.strictEqual(err.lde_message, 'Operations Error');
+                    strictEqual(err.lde_message, 'Operations Error');
                     resolve();
                 } catch (assertionError) {
                     reject(assertionError);
@@ -97,7 +98,7 @@ describe('issue 845', () => {
             });
             res.on('searchEntry', entry => {
                 try {
-                    assert.strictEqual(entry.objectName.toString(), 'dc=base');
+                    strictEqual(entry.objectName.toString(), 'dc=base');
                     resolve();
                 } catch (assertionError) {
                     reject(assertionError);
@@ -115,7 +116,7 @@ describe('issue 845', () => {
             });
             res.on('searchEntry', entry => {
                 try {
-                    assert.strictEqual(entry.objectName.toString(), 'dc=subtree');
+                    strictEqual(entry.objectName.toString(), 'dc=subtree');
                     resolve();
                 } catch (assertionError) {
                     reject(assertionError);

@@ -1,10 +1,10 @@
-const cluster = require('cluster');
-const ldap = require('ldapjs-promise');
-const os = require('os');
+import cluster from 'node:cluster';
+import { createServer } from 'ldapjs-promise';
+import os from 'node:os';
 
 const threads = [];
 threads.getNext = function () {
-    return (Math.floor(Math.random() * this.length));
+    return Math.floor(Math.random() * this.length);
 }
 
 const serverOptions = {
@@ -16,7 +16,7 @@ const serverOptions = {
     }
 };
 
-const server = ldap.createServer(serverOptions);
+const server = createServer(serverOptions);
 
 if (cluster.isPrimary) {
     for (let i = 0; i < os.cpus().length; i++) {

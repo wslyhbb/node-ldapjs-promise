@@ -1,6 +1,5 @@
-'use strict';
-const assert = require('node:assert');
-const ldapjs = require('../../lib');
+import assert from 'node:assert/strict';
+import { createClient } from '../../lib/index.js';
 
 const SCHEME = process.env.SCHEME || 'ldap';
 const HOST = process.env.HOST || '127.0.0.1';
@@ -11,7 +10,7 @@ let client;
 
 describe('issue-883', function () {
     before(async function () {
-        client = ldapjs.createClient({ url: baseURL });
+        client = createClient({ url: baseURL });
         client.on('error', () => { });
         await client.bind('cn=admin,dc=planetexpress,dc=com', 'GoodNewsEveryone');
     });

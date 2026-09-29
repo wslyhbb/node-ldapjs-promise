@@ -35,7 +35,7 @@ ldapjs-promise object(s).  If the filter is "complex", it will be a "tree" of ob
 For example:
 
 ```js
-const parseFilter = require('ldapjs-promise').parseFilter;
+import { parseFilter } from 'ldapjs-promise';
 
 const f = parseFilter('(objectclass=*)');
 ```

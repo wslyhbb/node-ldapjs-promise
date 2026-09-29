@@ -1,33 +1,32 @@
-'use strict';
-const assert = require('node:assert');
-const {
+import { ok, equal } from 'node:assert';
+import {
   LDAPError,
   ConnectionError,
   AbandonedError,
   TimeoutError,
   ConstraintViolationError,
   LDAP_OTHER
-} = require('../lib');
+} from '../lib/index.js';
 
 describe('errors', function () {
   it('should create a basic error', function () {
     const msg = 'mymsg';
     const err = new LDAPError(msg, null, null);
-    assert.ok(err);
-    assert.equal(err.name, 'LDAPError');
-    assert.equal(err.code, LDAP_OTHER);
-    assert.equal(err.dn, '');
-    assert.equal(err.message, msg);
+    ok(err);
+    equal(err.name, 'LDAPError');
+    equal(err.code, LDAP_OTHER);
+    equal(err.dn, '');
+    equal(err.message, msg);
   })
 
   it('should create a ConstraintViolationError', function () {
     const msg = 'mymsg';
     const err = new ConstraintViolationError(msg, null, null);
-    assert.ok(err);
-    assert.equal(err.name, 'ConstraintViolationError');
-    assert.equal(err.code, 19);
-    assert.equal(err.dn, '');
-    assert.equal(err.message, msg);
+    ok(err);
+    equal(err.name, 'ConstraintViolationError');
+    equal(err.code, 19);
+    equal(err.dn, '');
+    equal(err.message, msg);
   })
 
   it('should create "custom" errors', function () {
@@ -40,11 +39,11 @@ describe('errors', function () {
     errors.forEach(function (entry) {
       const msg = entry.name + 'msg';
       const err = new entry.Func(msg);
-      assert.ok(err);
-      assert.equal(err.name, entry.name);
-      assert.equal(err.code, LDAP_OTHER);
-      assert.equal(err.dn, '');
-      assert.equal(err.message, msg);
+      ok(err);
+      equal(err.name, entry.name);
+      equal(err.code, LDAP_OTHER);
+      equal(err.dn, '');
+      equal(err.message, msg);
     });
   });
 });

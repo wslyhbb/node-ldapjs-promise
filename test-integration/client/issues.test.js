@@ -1,6 +1,5 @@
-'use strict';
-const assert = require('node:assert');
-const ldapjs = require('../../lib');
+import assert from 'node:assert/strict';
+import { createClient } from '../../lib/index.js';
 
 const SCHEME = process.env.SCHEME || 'ldap';
 const HOST = process.env.HOST || '127.0.0.1';
@@ -19,7 +18,7 @@ describe('LDAP issues', function () {
     // in OpenLDAP 2.5.
         const longStr = '292979f2c86d513d48bbb9786b564b3c5228146e5ba46f404724e322544a7304a2b1049168803a5485e2d57a544c6a0d860af91330acb77e5907a9e601ad1227e80e0dc50ab';
         const targetDN = 'cn=Turanga Leela,ou=people,dc=planetexpress,dc=com';
-        const client = ldapjs.createClient({ url: baseURL });
+        const client = createClient({ url: baseURL });
         client.on('error', () => { });
 
         try {
@@ -36,7 +35,7 @@ describe('LDAP issues', function () {
     });
 
     it('whois works correctly (issue #370)', async function () {
-        const client = ldapjs.createClient({ url: baseURL });
+        const client = createClient({ url: baseURL });
         client.on('error', () => { });
         try {
             await client.bind('cn=Philip J. Fry,ou=people,dc=planetexpress,dc=com', 'fry');
@@ -51,7 +50,7 @@ describe('LDAP issues', function () {
     });
 
     it('can access large groups (issue #582)', async function () {
-        const client = ldapjs.createClient({ url: baseURL });
+        const client = createClient({ url: baseURL });
         client.on('error', () => { });
         try {
             await client.bind('cn=admin,dc=planetexpress,dc=com ', 'GoodNewsEveryone');

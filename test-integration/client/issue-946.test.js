@@ -1,6 +1,10 @@
-'use strict';
-const assert = require('node:assert');
-const ldapjs = require('../../lib');
+import assert from 'node:assert/strict';
+import {
+    createClient,
+    PasswordPolicyControl,
+    Change,
+    Attribute
+} from '../../lib/index.js';
 
 const SCHEME = process.env.SCHEME || 'ldap';
 const HOST = process.env.HOST || '127.0.0.1';
@@ -9,7 +13,7 @@ const baseURL = `${SCHEME}://${HOST}:${PORT}`;
 
 describe('issue-946', function () {
     it('can use password policy response', async function () {
-        const client = ldapjs.createClient({ url: baseURL });
+        const client = createClient({ url: baseURL });
         client.on('error', () => { });
         const targetDN = 'cn=Bender Bending Rodríguez,ou=people,dc=planetexpress,dc=com';
 
@@ -47,9 +51,9 @@ describe('issue-946', function () {
 });
 
 async function bindNewClient (targetDN, password, expected) {
-    const client = ldapjs.createClient({ url: baseURL });
+    const client = createClient({ url: baseURL });
     client.on('error', () => { });
-    const control = new ldapjs.PasswordPolicyControl();
+    const control = new PasswordPolicyControl();
     const response = await client.bind(targetDN, password, control);
     assert.ok(response);
     assert.strictEqual(response.status, 0);
@@ -59,7 +63,7 @@ async function bindNewClient (targetDN, password, expected) {
     let graceAuthNsRemaining = null;
 
     response.controls.forEach(responseControl => {
-        if (responseControl.type === ldapjs.PasswordPolicyControl.OID) {
+        if (responseControl.type === PasswordPolicyControl.OID) {
             error = responseControl.value.error ?? error;
             timeBeforeExpiration = responseControl.value.timeBeforeExpiration ?? timeBeforeExpiration;
             graceAuthNsRemaining = responseControl.value.graceAuthNsRemaining ?? graceAuthNsRemaining;
@@ -80,9 +84,9 @@ async function bindNewClient (targetDN, password, expected) {
 }
 
 async function changePassword (client, targetDN, newPassword) {
-    const change = new ldapjs.Change({
+    const change = new Change({
         operation: 'replace',
-        modification: new ldapjs.Attribute({
+        modification: new Attribute({
             type: 'userPassword',
             values: newPassword
         })

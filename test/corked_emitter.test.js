@@ -1,6 +1,5 @@
-'use strict';
-const assert = require('node:assert');
-const CorkedEmitter = require('../lib/corked_emitter');
+import { deepStrictEqual } from 'node:assert';
+import CorkedEmitter from '../lib/corked_emitter.js';
 
 function gatherEventSequence (expectedNumber) {
   const gatheredEvents = [];
@@ -43,7 +42,7 @@ describe('CorkedEmitter', () => {
 
     const gatheredEvents = await gatherer.finished;
     expectedSequence.forEach((expectedEvent, i) => {
-      assert.deepStrictEqual(gatheredEvents[i], expectedEvent);
+      deepStrictEqual(gatheredEvents[i], expectedEvent);
     });
   });
 
@@ -70,7 +69,7 @@ describe('CorkedEmitter', () => {
 
     const gatheredEvents = await gatherer.finished;
     expectedSequence.forEach((expectedEvent, i) => {
-      assert.deepStrictEqual(gatheredEvents[i], expectedEvent);
+      deepStrictEqual(gatheredEvents[i], expectedEvent);
     });
   });
 
@@ -100,7 +99,7 @@ describe('CorkedEmitter', () => {
 
     const gatheredEvents = await gatherer.finished;
     expectedSequence.forEach((expectedEvent, i) => {
-      assert.deepStrictEqual(gatheredEvents[i], expectedEvent);
+      deepStrictEqual(gatheredEvents[i], expectedEvent);
     });
   });
 });

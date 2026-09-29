@@ -1,52 +1,51 @@
-'use strict';
-const assert = require('node:assert');
-const messageTrackerFactory = require('../../../../lib/client/message-tracker/');
+import { throws, strictEqual, deepStrictEqual } from 'node:assert';
+import messageTrackerFactory from '../../../../lib/client/message-tracker/index.js';
 
 describe('message-tracker', () => {
   describe('options', () => {
     it('should require an options object', () => {
-      assert.throws(() => messageTrackerFactory(), /options object is required/);
-      assert.throws(() => messageTrackerFactory([]), /options object is required/);
-      assert.throws(() => messageTrackerFactory(''), /options object is required/);
-      assert.throws(() => messageTrackerFactory(42), /options object is required/);
+      throws(() => messageTrackerFactory(), /options object is required/);
+      throws(() => messageTrackerFactory([]), /options object is required/);
+      throws(() => messageTrackerFactory(''), /options object is required/);
+      throws(() => messageTrackerFactory(42), /options object is required/);
     });
 
     it('should require id to be a string', () => {
-      assert.throws(() => messageTrackerFactory({ id: {} }), /options\.id string is required/);
-      assert.throws(() => messageTrackerFactory({ id: [] }), /options\.id string is required/);
-      assert.throws(() => messageTrackerFactory({ id: 42 }), /options\.id string is required/);
+      throws(() => messageTrackerFactory({ id: {} }), /options\.id string is required/);
+      throws(() => messageTrackerFactory({ id: [] }), /options\.id string is required/);
+      throws(() => messageTrackerFactory({ id: 42 }), /options\.id string is required/);
     });
 
     it('should require parser to be an object', () => {
-      assert.throws(() => messageTrackerFactory({ id: 'foo', parser: 'bar' }), /options\.parser object is required/);
-      assert.throws(() => messageTrackerFactory({ id: 'foo', parser: 42 }), /options\.parser object is required/);
-      assert.throws(() => messageTrackerFactory({ id: 'foo', parser: [] }), /options\.parser object is required/);
+      throws(() => messageTrackerFactory({ id: 'foo', parser: 'bar' }), /options\.parser object is required/);
+      throws(() => messageTrackerFactory({ id: 'foo', parser: 42 }), /options\.parser object is required/);
+      throws(() => messageTrackerFactory({ id: 'foo', parser: [] }), /options\.parser object is required/);
     });
   });
 
   describe('.pending', () => {
     it('should return 0 for no messages', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      assert.strictEqual(tracker.pending, 0);
+      strictEqual(tracker.pending, 0);
     });
 
     it('should return 1 for 1 message', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
       tracker.track({}, () => {});
-      assert.strictEqual(tracker.pending, 1);
+      strictEqual(tracker.pending, 1);
     });
   });
 
   describe('#abandon', () => {
     it('should return false if message does not exist', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      assert.strictEqual(tracker.abandon(1), false);
+      strictEqual(tracker.abandon(1), false);
     });
 
     it('should return true if message is abandoned', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
       tracker.track({}, {});
-      assert.strictEqual(tracker.abandon(1), true);
+      strictEqual(tracker.abandon(1), true);
     });
   });
 
@@ -54,7 +53,7 @@ describe('message-tracker', () => {
     it('should return handler for fetched message', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
       tracker.track({}, { handler });
-      assert.strictEqual(tracker.fetch(1).handler, handler);
+      strictEqual(tracker.fetch(1).handler, handler);
 
       function handler () {}
     });
@@ -64,14 +63,14 @@ describe('message-tracker', () => {
       tracker.track({}, { handler });
       tracker.track({ abandon: 'message' }, { handler: () => {} });
       tracker.abandon(1);
-      assert.strictEqual(tracker.fetch(1).handler, handler);
+      strictEqual(tracker.fetch(1).handler, handler);
 
       function handler () {}
     });
 
     it('should return null when message does not exist', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
-      assert.strictEqual(tracker.fetch(1), null);
+      strictEqual(tracker.fetch(1), null);
     });
   });
 
@@ -86,7 +85,7 @@ describe('message-tracker', () => {
       tracker.track({}, { handler: handler2 });
       tracker.purge().forEach(({ msgID, handler }) => calls.push([msgID, handler]));
 
-      assert.deepStrictEqual(calls, [[1, handler1], [2, handler2]]);
+      deepStrictEqual(calls, [[1, handler1], [2, handler2]]);
     });
   });
 
@@ -95,7 +94,7 @@ describe('message-tracker', () => {
       const tracker = messageTrackerFactory({ id: 'foo', parser: {} });
       tracker.track({}, { handler: () => {} });
       tracker.remove(1);
-      assert.strictEqual(tracker.pending, 0);
+      strictEqual(tracker.pending, 0);
     });
 
     it('should remove from the abandoned track', () => {
@@ -104,7 +103,7 @@ describe('message-tracker', () => {
       tracker.track({ abandon: 'message' }, { handler: () => {} });
       tracker.abandon(1);
       tracker.remove(1);
-      assert.strictEqual(tracker.pending, 1);
+      strictEqual(tracker.pending, 1);
     });
   });
 
@@ -116,8 +115,8 @@ describe('message-tracker', () => {
 
       tracker.track(message, { handler });
 
-      assert.deepStrictEqual(message, { messageId: 1 });
-      assert.strictEqual(tracker.fetch(1).handler, handler);
+      deepStrictEqual(message, { messageId: 1 });
+      strictEqual(tracker.fetch(1).handler, handler);
     });
   });
 });

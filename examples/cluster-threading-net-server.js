@@ -1,12 +1,12 @@
-const cluster = require('cluster');
-const ldap = require('ldapjs-promise');
-const net = require('net');
-const os = require('os');
+import cluster from 'node:cluster';
+import ldap from 'ldapjs-promise';
+import net from 'node:net';
+import os from 'node:os';
 
 const threads = [];
 threads.getNext = function () {
-    return (Math.floor(Math.random() * this.length));
-}
+    return Math.floor(Math.random() * this.length);
+};
 
 const serverOptions = {
     port: 1389
@@ -33,7 +33,7 @@ if (cluster.isPrimary) {
 
     server.listen(serverOptions.port, function () {
         console.log('ldapjs-promise listening at ldap://127.0.0.1:' + serverOptions.port);
-    })
+    });
 } else {
     const server = ldap.createServer(serverOptions);
 
@@ -46,8 +46,9 @@ if (cluster.isPrimary) {
                 socket.resume();
                 console.log('ldapjs-promise client connection accepted on ' +
                     threadId.toString());
+                break;
         }
-    })
+    });
 
     server.search('dc=example', function (req, res) {
         console.log('ldapjs-promise search initiated on ' + threadId.toString());
@@ -59,7 +60,9 @@ if (cluster.isPrimary) {
             }
         };
 
-        if (req.filter.matches(obj.attributes)) { res.send(obj); }
+        if (req.filter.matches(obj.attributes)) { 
+            res.send(obj); 
+        }
 
         res.end();
     });

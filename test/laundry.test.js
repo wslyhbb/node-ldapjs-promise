@@ -1,17 +1,19 @@
-'use strict';
-const assert = require('node:assert');
-const { getSock, uuid } = require('./utils');
-const { SearchResultEntry } = require('@ldapjs/messages');
-const Attribute = require('@ldapjs/attribute');
-const ldap = require('../lib');
+import { ok, strictEqual } from 'node:assert';
+import { getSock, uuid } from './utils.js';
+import messages from '@ldapjs/messages';
+import Attribute from '@ldapjs/attribute';
+import { createServer, createClient } from '../lib/index.js';
+
+const { SearchResultEntry } = messages;
+const { fromObject } = Attribute;
 
 async function search(client, suffix, options) {
     const response = await client.search(suffix, options);
-    assert.ok(response);
+    ok(response);
 
     let found = false;
     response.on('searchEntry', function (entry) {
-        assert.ok(entry);
+        ok(entry);
         found = true;
     });
 
@@ -19,7 +21,7 @@ async function search(client, suffix, options) {
         response.once('error', reject);
         response.once('end', resolve);
     });
-    assert.ok(found);
+    ok(found);
 }
 
 describe('laundry', function () {
@@ -31,7 +33,7 @@ describe('laundry', function () {
     beforeEach(() => {
         return new Promise((resolve, reject) => {
             suffix = `dc=${uuid()}`;
-            server = ldap.createServer();
+            server = createServer();
             socketPath = getSock();
 
             server.on('error', reject);
@@ -44,7 +46,7 @@ describe('laundry', function () {
             server.search(suffix, function (req, res) {
                 const entry = new SearchResultEntry({
                     entry: 'cn=foo,' + suffix,
-                    attributes: Attribute.fromObject({
+                    attributes: fromObject({
                         objectclass: ['person', 'top'],
                         cn: 'Pogo Stick',
                         sn: 'Stick',
@@ -61,7 +63,7 @@ describe('laundry', function () {
             });
 
             server.listen(socketPath, function () {
-                client = ldap.createClient({
+                client = createClient({
                     socketPath: socketPath
                 });
 
@@ -122,14 +124,14 @@ describe('laundry', function () {
     });
 
     it('should emit connect multiple times (GH-55)', async function () {
-        const c = ldap.createClient({
+        const c = createClient({
             socketPath: socketPath
         });
 
         let count = 0;
         await new Promise((resolve, reject) => {
             c.on('connect', async function (socket) {
-                assert.ok(socket);
+                ok(socket);
                 count++;
                 try {
                     await c.bind('cn=root', 'secret');
@@ -141,6 +143,6 @@ describe('laundry', function () {
             });
             c.once('error', reject);
         });
-        assert.strictEqual(count, 1);
+        strictEqual(count, 1);
     });
 });

@@ -2,6 +2,7 @@
   "name": "ldapjs-promise",
   "version": "4.0.0",
   "description": "LDAP client and server APIs",
+  "type": "module",
   "main": "lib/index.js",
   "types": "index.d.ts",
   "scripts": {

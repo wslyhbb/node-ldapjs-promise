@@ -1,12 +1,11 @@
-'use strict';
-const assert = require('node:assert');
-const enqueue = require('../../../../lib/client/request-queue/enqueue');
+import { strictEqual, deepStrictEqual, rejects } from 'node:assert';
+import enqueue from '../../../../lib/client/request-queue/enqueue.js';
 
 describe('enqueue', () => {
   it('should reject new requests if size is exceeded', () => {
     const q = { _queue: { size: 5 }, size: 5 };
     const result = enqueue.call(q, 'foo', 'bar', {}, {});
-    assert.strictEqual(result, false);
+    strictEqual(result, false);
   });
 
   it('should add a request and return true if no timeout', () => {
@@ -14,7 +13,7 @@ describe('enqueue', () => {
       _queue: {
         size: 0,
         add (obj) {
-          assert.deepStrictEqual(obj, {
+          deepStrictEqual(obj, {
             message: 'foo',
             expect: 'bar',
             emitter: 'baz',
@@ -31,7 +30,7 @@ describe('enqueue', () => {
       emitter: 'baz',
       reject: 'bif'
     });
-    assert.strictEqual(result, true);
+    strictEqual(result, true);
   });
 
   it('should add a request and return if timer not set', () => {
@@ -39,7 +38,7 @@ describe('enqueue', () => {
       _queue: {
         size: 0,
         add (obj) {
-          assert.deepStrictEqual(obj, {
+          deepStrictEqual(obj, {
             message: 'foo',
             expect: 'bar',
             emitter: 'baz',
@@ -57,7 +56,7 @@ describe('enqueue', () => {
       emitter: 'baz',
       reject: 'bif'
     });
-    assert.strictEqual(result, true);
+    strictEqual(result, true);
   });
 
   it('should add a request, returns true, and clears queue', () => {
@@ -65,7 +64,7 @@ describe('enqueue', () => {
       _queue: {
         size: 0,
         add (obj) {
-          assert.deepStrictEqual(obj, {
+          deepStrictEqual(obj, {
             message: 'foo',
             expect: 'bar',
             emitter: 'baz',
@@ -76,7 +75,7 @@ describe('enqueue', () => {
       _frozen: false,
       timeout: 5,
       _timer: 123,
-      freeze () { assert.strictEqual(true, true); },
+      freeze () { strictEqual(true, true); },
       async purge () { return []; }
     };
     const result = enqueue.call(q, {
@@ -85,7 +84,7 @@ describe('enqueue', () => {
       emitter: 'baz',
       reject: 'bif'
     });
-    assert.strictEqual(result, true);
+    strictEqual(result, true);
   });
 
   it('rejects queued requests when the queue times out', async () => {
@@ -112,6 +111,6 @@ describe('enqueue', () => {
       enqueue.call(q, { reject });
     });
 
-    await assert.rejects(timeout, { message: 'request queue timeout' });
+    await rejects(timeout, { message: 'request queue timeout' });
   });
 });

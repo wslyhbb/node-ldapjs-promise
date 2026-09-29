@@ -1,12 +1,22 @@
-const ldap = require('../lib/index');
+import {
+    createServer,
+    parseDN,
+    SearchRequest,
+    InsufficientAccessRightsError,
+    InvalidCredentialsError,
+    EntryAlreadyExistsError,
+    NoSuchObjectError,
+    NoSuchAttributeError,
+    ProtocolError
+} from '../lib/index.js';
 
 /// --- Shared handlers
 
 function authorize(req, res, next) {
     /* Any user may search after bind, only cn=root has full power */
-    const isSearch = (req instanceof ldap.SearchRequest);
+    const isSearch = (req instanceof SearchRequest);
     if (!req.connection.ldap.bindDN.equals('cn=root') && !isSearch) {
-        return next(new ldap.InsufficientAccessRightsError());
+        return next(new InsufficientAccessRightsError());
     }
 
     return next();
@@ -16,11 +26,11 @@ function authorize(req, res, next) {
 
 const SUFFIX = 'o=smartdc';
 const db = {};
-const server = ldap.createServer();
+const server = createServer();
 
 server.bind('cn=root', function (req, res, next) {
     if (req.dn.toString() !== 'cn=root' || req.credentials !== 'secret') {
-        return next(new ldap.InvalidCredentialsError());
+        return next(new InvalidCredentialsError());
     }
 
     res.end();
@@ -30,7 +40,7 @@ server.bind('cn=root', function (req, res, next) {
 server.add(SUFFIX, authorize, function (req, res, next) {
     const dn = req.dn.toString();
 
-    if (db[dn]) { return next(new ldap.EntryAlreadyExistsError(dn)); }
+    if (db[dn]) { return next(new EntryAlreadyExistsError(dn)); }
 
     db[dn] = req.toObject().attributes;
     res.end();
@@ -39,14 +49,14 @@ server.add(SUFFIX, authorize, function (req, res, next) {
 
 server.bind(SUFFIX, function (req, res, next) {
     const dn = req.dn.toString();
-    if (!db[dn]) { return next(new ldap.NoSuchObjectError(dn)); }
+    if (!db[dn]) { return next(new NoSuchObjectError(dn)); }
 
     if (!db[dn].userpassword) {
-        return next(new ldap.NoSuchAttributeError('userPassword'));
+        return next(new NoSuchAttributeError('userPassword'));
     }
 
     if (db[dn].userpassword.indexOf(req.credentials) === -1) {
-        return next(new ldap.InvalidCredentialsError());
+        return next(new InvalidCredentialsError());
     }
 
     res.end();
@@ -55,10 +65,10 @@ server.bind(SUFFIX, function (req, res, next) {
 
 server.compare(SUFFIX, authorize, function (req, res, next) {
     const dn = req.dn.toString();
-    if (!db[dn]) { return next(new ldap.NoSuchObjectError(dn)); }
+    if (!db[dn]) { return next(new NoSuchObjectError(dn)); }
 
     if (!db[dn][req.attribute]) {
-        return next(new ldap.NoSuchAttributeError(req.attribute));
+        return next(new NoSuchAttributeError(req.attribute));
     }
 
     let matches = false;
@@ -76,7 +86,7 @@ server.compare(SUFFIX, authorize, function (req, res, next) {
 
 server.del(SUFFIX, authorize, function (req, res, next) {
     const dn = req.dn.toString();
-    if (!db[dn]) { return next(new ldap.NoSuchObjectError(dn)); }
+    if (!db[dn]) { return next(new NoSuchObjectError(dn)); }
 
     delete db[dn];
 
@@ -87,9 +97,9 @@ server.del(SUFFIX, authorize, function (req, res, next) {
 server.modify(SUFFIX, authorize, function (req, res, next) {
     const dn = req.dn.toString();
     if (!req.changes.length) {
-        return next(new ldap.ProtocolError('changes required'));
+        return next(new ProtocolError('changes required'));
     }
-    if (!db[dn]) { return next(new ldap.NoSuchObjectError(dn)); }
+    if (!db[dn]) { return next(new NoSuchObjectError(dn)); }
 
     const entry = db[dn];
 
@@ -99,7 +109,7 @@ server.modify(SUFFIX, authorize, function (req, res, next) {
         switch (req.changes[i].operation) {
             case 'replace':
                 if (!entry[mod.type]) {
-                    return next(new ldap.NoSuchAttributeError(mod.type));
+                    return next(new NoSuchAttributeError(mod.type));
                 }
 
                 if (!mod.vals || !mod.vals.length) {
@@ -125,7 +135,7 @@ server.modify(SUFFIX, authorize, function (req, res, next) {
 
             case 'delete':
                 if (!entry[mod.type]) {
-                    return next(new ldap.NoSuchAttributeError(mod.type));
+                    return next(new NoSuchAttributeError(mod.type));
                 }
 
                 delete entry[mod.type];
@@ -140,7 +150,7 @@ server.modify(SUFFIX, authorize, function (req, res, next) {
 
 server.search(SUFFIX, authorize, function (req, res, next) {
     const dn = req.dn.toString();
-    if (!db[dn]) { return next(new ldap.NoSuchObjectError(dn)); }
+    if (!db[dn]) { return next(new NoSuchObjectError(dn)); }
 
     let scopeCheck;
 
@@ -160,7 +170,7 @@ server.search(SUFFIX, authorize, function (req, res, next) {
             scopeCheck = function (k) {
                 if (req.dn.equals(k)) { return true; }
 
-                const parent = ldap.parseDN(k).parent();
+                const parent = parseDN(k).parent();
                 return (parent ? parent.equals(req.dn) : false);
             }
             break;

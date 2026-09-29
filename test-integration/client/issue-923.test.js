@@ -1,8 +1,9 @@
-'use strict';
-const assert = require('node:assert');
-const ldapjs = require('../../lib');
-const { DN } = require('@ldapjs/dn');
-const Change = require('@ldapjs/change');
+import assert from 'node:assert/strict';
+import { createClient } from '../../lib/index.js';
+import dn from '@ldapjs/dn';
+import Change from '@ldapjs/change';
+
+const { DN } = dn;
 
 const SCHEME = process.env.SCHEME || 'ldap';
 const HOST = process.env.HOST || '127.0.0.1';
@@ -13,7 +14,7 @@ let client;
 
 describe('issue-923', function () {
     before(function () {
-        client = ldapjs.createClient({ url: baseURL });
+        client = createClient({ url: baseURL });
         client.on('error', () => { });
     });
 

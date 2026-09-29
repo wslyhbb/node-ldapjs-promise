@@ -1,6 +1,5 @@
-'use strict';
-const assert = require('node:assert');
-const flush = require('../../../../lib/client/request-queue/flush');
+import { ok, equal, deepStrictEqual } from 'node:assert';
+import flush from '../../../../lib/client/request-queue/flush.js';
 
 describe('flush', () => {
   it('should clear the timer', () => {
@@ -11,12 +10,12 @@ describe('flush', () => {
           return [];
         },
         clear () {
-          assert.ok(true);
+          ok(true);
         }
       }
     }
     flush.call(q);
-    assert.equal(q._timer, null);
+    equal(q._timer, null);
   })
 
   it('should return queued requests', async () => {
@@ -33,12 +32,12 @@ describe('flush', () => {
           return [req];
         },
         clear () {
-          assert.ok(true);
+          ok(true);
         }
       }
     }
     const requests = await flush.call(q);
-    assert.deepStrictEqual(requests, [req]);
-    assert.equal(q._timer, null);
+    deepStrictEqual(requests, [req]);
+    equal(q._timer, null);
   });
 });

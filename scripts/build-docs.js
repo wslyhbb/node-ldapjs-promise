@@ -1,14 +1,19 @@
-const fs = require('fs/promises');
-const path = require('path');
-const { marked } = require('marked');
-const Slugger = require('github-slugger').default;
-const fm = require('front-matter');
-const { highlight } = require('highlight.js');
+import {
+    stat, mkdir, readdir, copyFile, rm, readFile, writeFile
+} from 'fs/promises';
+import { dirname, join, resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { marked } from 'marked';
+import Slugger from 'github-slugger';
+import fm from 'front-matter';
+import hljs from 'highlight.js';
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
 
 marked.use({
     highlight: (code, lang) => {
         if (lang) {
-            return highlight(code, { language: lang }).value;
+            return hljs.highlight(code, { language: lang }).value;
         }
 
         return code;
@@ -82,27 +87,27 @@ function createHTML(template, text) {
 }
 
 async function copyRecursive(src, dest) {
-    const stats = await fs.stat(src);
+    const stats = await stat(src);
     const isDirectory = stats.isDirectory();
     if (isDirectory) {
-        await fs.mkdir(dest);
-        const files = await fs.readdir(src);
+        await mkdir(dest);
+        const files = await readdir(src);
         for (const file of files) {
-            await copyRecursive(path.join(src, file), path.join(dest, file));
+            await copyRecursive(join(src, file), join(dest, file));
         }
     } else {
-        await fs.copyFile(src, dest);
+        await copyFile(src, dest);
     }
 }
 
 async function createDocs() {
-    const docs = path.resolve(__dirname, '..', 'docs')
-    const dist = path.resolve(__dirname, '..', 'public')
-    const branding = path.join(docs, 'branding')
-    const src = path.join(branding, 'public')
+    const docs = resolve(scriptDir, '..', 'docs')
+    const dist = resolve(scriptDir, '..', 'public')
+    const branding = join(docs, 'branding')
+    const src = join(branding, 'public')
 
     try {
-        await fs.rm(dist, { recursive: true });
+        await rm(dist, { recursive: true });
     } catch (ex) {
         if (ex.code !== 'ENOENT') {
             throw ex;
@@ -110,19 +115,19 @@ async function createDocs() {
     }
     await copyRecursive(src, dist);
 
-    const highlightjsStyles = path.resolve(__dirname, '..', 'node_modules', 'highlight.js', 'styles')
-    await fs.copyFile(path.join(highlightjsStyles, 'default.css'), path.join(dist, 'media', 'css', 'highlight.css'));
+    const highlightjsStyles = resolve(scriptDir, '..', 'node_modules', 'highlight.js', 'styles')
+    await copyFile(join(highlightjsStyles, 'default.css'), join(dist, 'media', 'css', 'highlight.css'));
 
-    const template = await fs.readFile(path.join(branding, 'template.html'), { encoding: 'utf8' });
-    const files = await fs.readdir(docs);
+    const template = await readFile(join(branding, 'template.html'), { encoding: 'utf8' });
+    const files = await readdir(docs);
     for (const file of files) {
         if (!file.endsWith('.md')) {
             continue
         }
-        const text = await fs.readFile(path.join(docs, file), { encoding: 'utf8' });
+        const text = await readFile(join(docs, file), { encoding: 'utf8' });
         const html = createHTML(template, text);
 
-        await fs.writeFile(path.join(dist, file.replace(/md$/, 'html')), html);
+        await writeFile(join(dist, file.replace(/md$/, 'html')), html);
     }
 }
 

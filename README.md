@@ -23,9 +23,9 @@ For full docs, head on over to <https://wslyhbb.github.io/ldapjs-promise.github.
 The methods signatures are the same except instead of callbacks they return promises.
 
 ```javascript
-const ldap = require('ldapjs-promise');
+import { createClient } from 'ldapjs-promise';
 
-const client = ldap.createClient({
+const client = createClient({
   url: 'ldap://127.0.0.1:1389'
 });
 await client.bind(dn, password);

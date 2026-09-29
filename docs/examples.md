@@ -14,16 +14,26 @@ with ldapjs-promise.
 # In-memory server
 
 ```js
-const ldap = require('ldapjs-promise');
+import {
+  SearchRequest,
+  createServer,
+  parseDN,
+  InsufficientAccessRightsError,
+  InvalidCredentialsError,
+  EntryAlreadyExistsError,
+  NoSuchObjectError,
+  NoSuchAttributeError,
+  ProtocolError
+} from 'ldapjs-promise';
 
 
 ///--- Shared handlers
 
 function authorize(req, res, next) {
   /* Any user may search after bind, only cn=root has full power */
-  const isSearch = (req instanceof ldap.SearchRequest);
+  const isSearch = (req instanceof SearchRequest);
   if (!req.connection.ldap.bindDN.equals('cn=root') && !isSearch)
-    return next(new ldap.InsufficientAccessRightsError());
+    return next(new InsufficientAccessRightsError());
 
   return next();
 }
@@ -33,13 +43,13 @@ function authorize(req, res, next) {
 
 const SUFFIX = 'o=joyent';
 const db = {};
-const server = ldap.createServer();
+const server = createServer();
 
 
 
 server.bind('cn=root', (req, res, next) => {
   if (req.dn.toString() !== 'cn=root' || req.credentials !== 'secret')
-    return next(new ldap.InvalidCredentialsError());
+    return next(new InvalidCredentialsError());
 
   res.end();
   return next();
@@ -49,7 +59,7 @@ server.add(SUFFIX, authorize, (req, res, next) => {
   const dn = req.dn.toString();
 
   if (db[dn])
-    return next(new ldap.EntryAlreadyExistsError(dn));
+    return next(new EntryAlreadyExistsError(dn));
 
   db[dn] = req.toObject().attributes;
   res.end();
@@ -59,13 +69,13 @@ server.add(SUFFIX, authorize, (req, res, next) => {
 server.bind(SUFFIX, (req, res, next) => {
   const dn = req.dn.toString();
   if (!db[dn])
-    return next(new ldap.NoSuchObjectError(dn));
+    return next(new NoSuchObjectError(dn));
 
   if (!db[dn].userpassword)
-    return next(new ldap.NoSuchAttributeError('userPassword'));
+    return next(new NoSuchAttributeError('userPassword'));
 
   if (db[dn].userpassword.indexOf(req.credentials) === -1)
-    return next(new ldap.InvalidCredentialsError());
+    return next(new InvalidCredentialsError());
 
   res.end();
   return next();
@@ -74,10 +84,10 @@ server.bind(SUFFIX, (req, res, next) => {
 server.compare(SUFFIX, authorize, (req, res, next) => {
   const dn = req.dn.toString();
   if (!db[dn])
-    return next(new ldap.NoSuchObjectError(dn));
+    return next(new NoSuchObjectError(dn));
 
   if (!db[dn][req.attribute])
-    return next(new ldap.NoSuchAttributeError(req.attribute));
+    return next(new NoSuchAttributeError(req.attribute));
 
   const matches = false;
   const vals = db[dn][req.attribute];
@@ -95,7 +105,7 @@ server.compare(SUFFIX, authorize, (req, res, next) => {
 server.del(SUFFIX, authorize, (req, res, next) => {
   const dn = req.dn.toString();
   if (!db[dn])
-    return next(new ldap.NoSuchObjectError(dn));
+    return next(new NoSuchObjectError(dn));
 
   delete db[dn];
 
@@ -106,9 +116,9 @@ server.del(SUFFIX, authorize, (req, res, next) => {
 server.modify(SUFFIX, authorize, (req, res, next) => {
   const dn = req.dn.toString();
   if (!req.changes.length)
-    return next(new ldap.ProtocolError('changes required'));
+    return next(new ProtocolError('changes required'));
   if (!db[dn])
-    return next(new ldap.NoSuchObjectError(dn));
+    return next(new NoSuchObjectError(dn));
 
   const entry = db[dn];
 
@@ -117,7 +127,7 @@ server.modify(SUFFIX, authorize, (req, res, next) => {
     switch (change.operation) {
     case 'replace':
       if (!entry[mod.type])
-        return next(new ldap.NoSuchAttributeError(mod.type));
+        return next(new NoSuchAttributeError(mod.type));
 
       if (!mod.vals || !mod.vals.length) {
         delete entry[mod.type];
@@ -141,7 +151,7 @@ server.modify(SUFFIX, authorize, (req, res, next) => {
 
     case 'delete':
       if (!entry[mod.type])
-        return next(new ldap.NoSuchAttributeError(mod.type));
+        return next(new NoSuchAttributeError(mod.type));
 
       delete entry[mod.type];
 
@@ -156,7 +166,7 @@ server.modify(SUFFIX, authorize, (req, res, next) => {
 server.search(SUFFIX, authorize, (req, res, next) => {
   const dn = req.dn.toString();
   if (!db[dn])
-    return next(new ldap.NoSuchObjectError(dn));
+    return next(new NoSuchObjectError(dn));
 
   let scopeCheck;
 
@@ -177,7 +187,7 @@ server.search(SUFFIX, authorize, (req, res, next) => {
       if (req.dn.equals(k))
         return true;
 
-      const parent = ldap.parseDN(k).parent();
+      const parent = parseDN(k).parent();
       return (parent ? parent.equals(req.dn) : false);
     };
     break;
@@ -219,26 +229,34 @@ server.listen(1389, () => {
 # /etc/passwd server
 
 ```js
-const fs = require('fs');
-const ldap = require('ldapjs-promise');
-const { spawn } = require('child_process');
-
+import { readFile } from 'fs';
+import {
+  createServer,
+  InsufficientAccessRightsError,
+  OperationsError,
+  ConstraintViolationError,
+  EntryAlreadyExistsError,
+  NoSuchObjectError,
+  ProtocolError,
+  UnwillingToPerformError
+} from 'ldapjs-promise';
+import { spawn } from 'child_process';
 
 
 ///--- Shared handlers
 
 function authorize(req, res, next) {
   if (!req.connection.ldap.bindDN.equals('cn=root'))
-    return next(new ldap.InsufficientAccessRightsError());
+    return next(new InsufficientAccessRightsError());
 
   return next();
 }
 
 
 function loadPasswdFile(req, res, next) {
-  fs.readFile('/etc/passwd', 'utf8', (err, data) => {
+  readFile('/etc/passwd', 'utf8', (err, data) => {
     if (err)
-      return next(new ldap.OperationsError(err.message));
+      return next(new OperationsError(err.message));
 
     req.users = {};
 
@@ -276,11 +294,11 @@ const pre = [authorize, loadPasswdFile];
 
 ///--- Mainline
 
-const server = ldap.createServer();
+const server = createServer();
 
 server.bind('cn=root', (req, res, next) => {
   if (req.dn.toString() !== 'cn=root' || req.credentials !== 'secret')
-    return next(new ldap.InvalidCredentialsError());
+    return next(new InvalidCredentialsError());
 
   res.end();
   return next();
@@ -289,15 +307,15 @@ server.bind('cn=root', (req, res, next) => {
 
 server.add('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].cn)
-    return next(new ldap.ConstraintViolationError('cn required'));
+    return next(new ConstraintViolationError('cn required'));
 
   if (req.users[req.dn.rdns[0].cn])
-    return next(new ldap.EntryAlreadyExistsError(req.dn.toString()));
+    return next(new EntryAlreadyExistsError(req.dn.toString()));
 
   const entry = req.toObject().attributes;
 
   if (entry.objectclass.indexOf('unixUser') === -1)
-    return next(new ldap.ConstraintViolationError('entry must be a unixUser'));
+    return next(new ConstraintViolationError('entry must be a unixUser'));
 
   const opts = ['-m'];
   if (entry.description) {
@@ -337,7 +355,7 @@ server.add('ou=users, o=myhost', pre, (req, res, next) => {
       let msg = '' + code;
       if (messages.length)
         msg += ': ' + messages.join();
-      return next(new ldap.OperationsError(msg));
+      return next(new OperationsError(msg));
     }
 
     res.end();
@@ -348,10 +366,10 @@ server.add('ou=users, o=myhost', pre, (req, res, next) => {
 
 server.modify('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].cn || !req.users[req.dn.rdns[0].cn])
-    return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    return next(new NoSuchObjectError(req.dn.toString()));
 
   if (!req.changes.length)
-    return next(new ldap.ProtocolError('changes required'));
+    return next(new ProtocolError('changes required'));
 
   const user = req.users[req.dn.rdns[0].cn].attributes;
   let mod;
@@ -361,12 +379,12 @@ server.modify('ou=users, o=myhost', pre, (req, res, next) => {
     switch (change.operation) {
     case 'replace':
       if (mod.type !== 'userpassword' || !mod.vals || !mod.vals.length)
-        return next(new ldap.UnwillingToPerformError('only password updates ' +
+        return next(new UnwillingToPerformError('only password updates ' +
                                                      'allowed'));
       break;
     case 'add':
     case 'delete':
-      return next(new ldap.UnwillingToPerformError('only replace allowed'));
+      return next(new UnwillingToPerformError('only replace allowed'));
     }
   }
 
@@ -375,7 +393,7 @@ server.modify('ou=users, o=myhost', pre, (req, res, next) => {
 
   passwd.on('exit', (code) => {
     if (code !== 0)
-      return next(new ldap.OperationsError('' + code));
+      return next(new OperationsError('' + code));
 
     res.end();
     return next();
@@ -385,7 +403,7 @@ server.modify('ou=users, o=myhost', pre, (req, res, next) => {
 
 server.del('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].cn || !req.users[req.dn.rdns[0].cn])
-    return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    return next(new NoSuchObjectError(req.dn.toString()));
 
   const userdel = spawn('userdel', ['-f', req.dn.rdns[0].cn]);
 
@@ -402,7 +420,7 @@ server.del('ou=users, o=myhost', pre, (req, res, next) => {
       let msg = '' + code;
       if (messages.length)
         msg += ': ' + messages.join();
-      return next(new ldap.OperationsError(msg));
+      return next(new OperationsError(msg));
     }
 
     res.end();
@@ -461,9 +479,12 @@ Thunderbird or Evolution over a MySQL database.
 // (1, 'Jane Doe', 'jane.doe@example.com');
 //
 
-const ldap = require('ldapjs-promise');
-const mysql = require("mysql");
-const server = ldap.createServer();
+import {
+  createServer,
+  InvalidCredentialsError
+} from 'ldapjs-promise';
+import mysql from "mysql";
+const server = createServer();
 const addrbooks = {};
 const userinfo = {};
 const ldap_port = 389;
@@ -519,7 +540,7 @@ db.query("SELECT c.*,u.username,u.password " +
 
     if (!userinfo.hasOwnProperty(username) ||
          userinfo[username].pwd != password) {
-      return next(new ldap.InvalidCredentialsError());
+      return next(new InvalidCredentialsError());
     }
 
     res.end();
@@ -556,14 +577,14 @@ $ ldapsearch -H ldap://localhost:389 -x -D cn=demo,dc=example,dc=com \
 This example demonstrates multi-threading via the `cluster` module utilizing a `net` server for initial socket receipt.  An alternate example demonstrating use of the `connectionRouter` `serverOptions` hook is available in the `examples` directory.
 
 ```js
-const cluster = require('cluster');
-const ldap = require('ldapjs-promise');
-const net = require('net');
-const os = require('os');
+import cluster from 'node:cluster';
+import { createServer } from 'ldapjs-promise';
+import net from 'node:net';
+import os from 'node:os';
 
 const threads = [];
 threads.getNext = function () {
-    return (Math.floor(Math.random() * this.length));
+    return Math.floor(Math.random() * this.length);
 };
 
 const serverOptions = {
@@ -573,7 +594,7 @@ const serverOptions = {
 if (cluster.isMaster) {
     const server = net.createServer(serverOptions, (socket) => {
         socket.pause();
-        console.log('ldapjs client requesting connection');
+        console.log('ldapjs-promise client requesting connection');
         let routeTo = threads.getNext();
         threads[routeTo].send({ type: 'connection' }, socket);
     });
@@ -590,10 +611,10 @@ if (cluster.isMaster) {
     }
 
     server.listen(serverOptions.port, function () {
-        console.log('ldapjs listening at ldap://127.0.0.1:' + serverOptions.port);
+        console.log('ldapjs-promise listening at ldap://127.0.0.1:' + serverOptions.port);
     });
 } else {
-    const server = ldap.createServer(serverOptions);
+    const server = createServer(serverOptions);
 
     let threadId = process.env.id;
 
@@ -602,12 +623,12 @@ if (cluster.isMaster) {
             case 'connection':
                 server.newConnection(socket);
                 socket.resume();
-                console.log('ldapjs client connection accepted on ' + threadId.toString());
+                console.log('ldapjs-promise client connection accepted on ' + threadId.toString());
         }
     });
 
     server.search('dc=example', function (req, res, next) {
-        console.log('ldapjs search initiated on ' + threadId.toString());
+        console.log('ldapjs-promise search initiated on ' + threadId.toString());
         var obj = {
             dn: req.dn.toString(),
             attributes: {

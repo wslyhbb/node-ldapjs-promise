@@ -16,9 +16,9 @@ familiar with LDAP. If you are not, read the [guide](guide.html) first.
 The code to create a new client looks like:
 
 ```js
-const ldap = require('ldapjs-promise');
+import { createClient } from 'ldapjs-promise';
 
-const client = ldap.createClient({
+const client = createClient({
   url: ['ldap://127.0.0.1:1389', 'ldap://127.0.0.2:1389']
 });
 
@@ -365,7 +365,7 @@ Many LDAP server enforce size limits upon the returned result set (commonly
 1000).  In order to retrieve results beyond this limit, a `PagedResultControl`
 is passed between the client and server to iterate through the entire dataset.
 While callers could choose to do this manually via the `controls` parameter to
-`search()`, ldapjs has internal mechanisms to easily automate the process.  The
+`search()`, ldapjs-promise has internal mechanisms to easily automate the process.  The
 most simple way to use the paging automation is to set the `paged` option to
 true when performing a search:
 

@@ -27,7 +27,7 @@ ldapjs-promise DN object; in most cases this will be handled for you under the
 covers of the ldapjs-promise framework, but if you need it, it is there.
 
 ```js
-const parseDN = require('ldapjs-promise').parseDN;
+import { parseDN } from 'ldapjs-promise';
 
 const dn = parseDN('cn=foo+sn=bar, ou=people, o=example');
 console.log(dn.toString());

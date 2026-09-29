@@ -16,7 +16,7 @@ familiar with LDAP. If you are not, read the [guide](guide.html) first.
 The code to create a new server looks like:
 
 ```js
-const server = ldap.createServer();
+const server = createServer();
 ```
 
 The full list of options is:
@@ -125,7 +125,7 @@ definition of the route.  For example:
 ```js
 function authorize(req, res, next) {
   if (!req.connection.ldap.bindDN.equals('cn=root'))
-    return next(new ldap.InsufficientAccessRightsError());
+    return next(new InsufficientAccessRightsError());
 
   return next();
 }
@@ -144,10 +144,13 @@ complete implementation of the LDAP protocol over
 looks like:
 
 ```js
-const ldap = require('ldapjs-promise');
-const ldapRiak = require('ldapjs-riak');
+import {
+  createServer,
+  OperationsError
+} from 'ldapjs-promise';
+import ldapRiak from 'ldapjs-riak';
 
-const server = ldap.createServer();
+const server = createServer();
 const backend = ldapRiak.createBackend({
   "host": "localhost",
   "port": 8098,
@@ -186,7 +189,7 @@ server.use(function(req, res, next) {
 All request objects have the `dn` getter on it, which is "context-sensitive"
 and returns the point in the tree that the operation wants to operate on.  The
 LDAP protocol itself sadly doesn't define operations this way, and has a unique
-name for just about every op.  So, ldapjs calls it `dn`.  The DN object itself
+name for just about every op.  So, ldapjs-promise calls it `dn`.  The DN object itself
 is documented at [DN](dn.html).
 
 All requests have an optional array of `Control` objects.  `Control` will have
@@ -227,7 +230,7 @@ _stop_ calling your handler chain.  For example:
 ```js
 server.search('o=example',
   (req, res, next) => { return next(); },
-  (req, res, next) => { return next(new ldap.OperationsError()); },
+  (req, res, next) => { return next(new OperationsError()); },
   (req, res, next) => { res.end(); }
 );
 ```
@@ -253,7 +256,7 @@ BindRequest objects have the following properties:
 ### version
 
 The LDAP protocol version the client is requesting to run this connection on.
-Note that ldapjs only supports LDAP version 3.
+Note that ldapjs-promise only supports LDAP version 3.
 
 ### name
 
@@ -587,7 +590,7 @@ operation.
 
 ### name
 
-The name of the extended operation. ldapjs will automatically set this.
+The name of the extended operation. ldapjs-promise will automatically set this.
 
 ### value
 

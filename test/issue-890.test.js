@@ -1,15 +1,15 @@
-'use strict';
-
 // This test is complicated. It must simulate a server sending an unsolicited,
 // or a mismatched, message in order to force the client's internal message
 // tracker to try and find a corresponding sent message that does not exist.
 // In order to do that, we need to set a high test timeout and wait for the
 // error message to be logged.
 
-const assert = require('node:assert');
-const ldapjs = require('../');
-const { SearchResultEntry } = require('@ldapjs/messages');
-const server = ldapjs.createServer();
+import { strictEqual } from 'node:assert';
+import { createServer, createClient } from '../lib/index.js';
+import messages from '@ldapjs/messages';
+
+const { SearchResultEntry } = messages;
+const server = createServer();
 const SUFFIX = '';
 
 server.bind(SUFFIX, (req, res, done) => {
@@ -59,7 +59,7 @@ describe('issue-890', function () {
                     trace() { }
                 };
 
-                client = ldapjs.createClient({
+                client = createClient({
                     url: [server.url],
                     timeout: 500,
                     log: logger
@@ -90,7 +90,7 @@ describe('issue-890', function () {
                 if (logMessages.length > 0) {
                     clearInterval(timer);
                     try {
-                        assert.strictEqual(
+                        strictEqual(
                             logMessages.some(msg => msg[1] === 'unmatched server message received'),
                             true
                         );

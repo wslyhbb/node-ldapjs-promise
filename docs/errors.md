@@ -18,7 +18,10 @@ have a `stack` property correctly set.
 In general, you will be using the errors in ldapjs-promise like:
 
 ```js
-const ldap = require('ldapjs-promise');
+import {
+  NoSuchObjectError,
+  EntryAlreadyExistsError
+} from 'ldapjs-promise';
 
 const db = {};
 
@@ -26,10 +29,10 @@ server.add('o=example', (req, res, next) => {
   const parent = req.dn.parent();
   if (parent) {
     if (!db[parent.toString()])
-      return next(new ldap.NoSuchObjectError(parent.toString()));
+      return next(new NoSuchObjectError(parent.toString()));
   }
   if (db[req.dn.toString()])
-    return next(new ldap.EntryAlreadyExistsError(req.dn.toString()));
+    return next(new EntryAlreadyExistsError(req.dn.toString()));
 
   ...
 });

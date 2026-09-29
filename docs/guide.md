@@ -128,9 +128,19 @@ To get started, open some file, and let us get the library loaded and a server
 created:
 
 ```js
-const ldap = require('ldapjs-promise');
+import {
+  createServer,
+  InvalidCredentialsError,
+  InsufficientAccessRightsError,
+  OperationsError,
+  ConstraintViolationError,
+  EntryAlreadyExistsError,
+  NoSuchObjectError,
+  ProtocolError,
+  UnwillingToPerformError
+} from 'ldapjs-promise';
 
-const server = ldap.createServer();
+const server = createServer();
 
 server.listen(1389, () => {
   console.log('/etc/passwd LDAP server up at: %s', server.url);
@@ -166,7 +176,7 @@ this code into your file:
 ```js
 server.bind('cn=root', (req, res, next) => {
   if (req.dn.toString() !== 'cn=root' || req.credentials !== 'secret')
-    return next(new ldap.InvalidCredentialsError());
+    return next(new InvalidCredentialsError());
 
   res.end();
   return next();
@@ -239,7 +249,7 @@ authorization handler that we will use in all our subsequent routes:
 ```js
 function authorize(req, res, next) {
   if (!req.connection.ldap.bindDN.equals('cn=root'))
-    return next(new ldap.InsufficientAccessRightsError());
+    return next(new InsufficientAccessRightsError());
 
   return next();
 }
@@ -272,16 +282,16 @@ The sample record above maps to:
 |/bin/sh            |Shell                              |
 
 Let us write some handlers to parse that and transform it into an LDAP search
-record (note, you will need to add `const fs = require('fs');` at the top of
+record (note, you will need to add `import { readFile } from 'fs';` at the top of
 the source file).
 
 First, make a handler that just loads the "user database" in a "pre" handler:
 
 ```js
 function loadPasswdFile(req, res, next) {
-  fs.readFile('/etc/passwd', 'utf8', (err, data) => {
+  readFile('/etc/passwd', 'utf8', (err, data) => {
     if (err)
-      return next(new ldap.OperationsError(err.message));
+      return next(new OperationsError(err.message));
 
     req.users = {};
 
@@ -439,20 +449,20 @@ gid: 114
 This is going to be a little bit ghetto, since what we are going to do is just
 use node's child process module to spawn calls to `adduser`.  Go ahead and add
 the following code in as another handler (you will need a
-`const { spawn } = require('child_process');` at the top of your file):
+`import { spawn } from 'child_process';` at the top of your file):
 
 ```js
 server.add('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].attrs.cn)
-    return next(new ldap.ConstraintViolationError('cn required'));
+    return next(new ConstraintViolationError('cn required'));
 
   if (req.users[req.dn.rdns[0].attrs.cn.value])
-    return next(new ldap.EntryAlreadyExistsError(req.dn.toString()));
+    return next(new EntryAlreadyExistsError(req.dn.toString()));
 
   const entry = req.toObject().attributes;
 
   if (entry.objectclass.indexOf('unixUser') === -1)
-    return next(new ldap.ConstraintViolationError('entry must be a unixUser'));
+    return next(new ConstraintViolationError('entry must be a unixUser'));
 
   const opts = ['-m'];
   if (entry.description) {
@@ -492,7 +502,7 @@ server.add('ou=users, o=myhost', pre, (req, res, next) => {
       let msg = '' + code;
       if (messages.length)
         msg += ': ' + messages.join();
-      return next(new ldap.OperationsError(msg));
+      return next(new OperationsError(msg));
     }
 
     res.end();
@@ -539,15 +549,15 @@ As before, here is a breakdown of the code:
 ```js
 server.add('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].attrs.cn)
-    return next(new ldap.ConstraintViolationError('cn required'));
+    return next(new ConstraintViolationError('cn required'));
 
   if (req.users[req.dn.rdns[0].attrs.cn.value])
-    return next(new ldap.EntryAlreadyExistsError(req.dn.toString()));
+    return next(new EntryAlreadyExistsError(req.dn.toString()));
 
   const entry = req.toObject().attributes;
 
   if (entry.objectclass.indexOf('unixUser') === -1)
-    return next(new ldap.ConstraintViolationError('entry must be a unixUser'));
+    return next(new ConstraintViolationError('entry must be a unixUser'));
 });
 ```
 
@@ -568,7 +578,7 @@ out to the `attributes` portion of the object since that is all we are really
 looking at.
     + Lastly, we did a super minimal check to see if the entry was of type
 `unixUser`. Frankly for this case, it is kind of useless, but it does illustrate
-one point: attribute names are case-insensitive, so ldapjs converts them all to
+one point: attribute names are case-insensitive, so ldapjs-promise converts them all to
 lower case (note the client sent _objectClass_ over the wire).
 
 After that, we really just delegated off to the _useradd_ command.  As far as I
@@ -587,10 +597,10 @@ Go ahead and add the following code into your source file:
 ```js
 server.modify('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].attrs.cn || !req.users[req.dn.rdns[0].attrs.cn.value])
-    return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    return next(new NoSuchObjectError(req.dn.toString()));
 
   if (!req.changes.length)
-    return next(new ldap.ProtocolError('changes required'));
+    return next(new ProtocolError('changes required'));
 
   const user = req.users[req.dn.rdns[0].attrs.cn.value].attributes;
   let mod;
@@ -600,12 +610,12 @@ server.modify('ou=users, o=myhost', pre, (req, res, next) => {
     switch (req.changes[i].operation) {
     case 'replace':
       if (mod.type !== 'userpassword' || !mod.vals || !mod.vals.length)
-        return next(new ldap.UnwillingToPerformError('only password updates ' +
+        return next(new UnwillingToPerformError('only password updates ' +
                                                      'allowed'));
       break;
     case 'add':
     case 'delete':
-      return next(new ldap.UnwillingToPerformError('only replace allowed'));
+      return next(new UnwillingToPerformError('only replace allowed'));
     }
   }
 
@@ -614,7 +624,7 @@ server.modify('ou=users, o=myhost', pre, (req, res, next) => {
 
   passwd.on('exit', (code) => {
     if (code !== 0)
-      return next(new ldap.OperationsError(code));
+      return next(new OperationsError(code));
 
     res.end();
     return next();
@@ -654,7 +664,7 @@ delete it :).  Add the following code into your server:
 ```js
 server.del('ou=users, o=myhost', pre, (req, res, next) => {
   if (!req.dn.rdns[0].attrs.cn || !req.users[req.dn.rdns[0].attrs.cn.value])
-    return next(new ldap.NoSuchObjectError(req.dn.toString()));
+    return next(new NoSuchObjectError(req.dn.toString()));
 
   const userdel = spawn('userdel', ['-f', req.dn.rdns[0].attrs.cn.value]);
 
@@ -671,7 +681,7 @@ server.del('ou=users, o=myhost', pre, (req, res, next) => {
       let msg = '' + code;
       if (messages.length)
         msg += ': ' + messages.join();
-      return next(new ldap.OperationsError(msg));
+      return next(new OperationsError(msg));
     }
 
     res.end();

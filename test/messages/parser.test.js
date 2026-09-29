@@ -1,13 +1,12 @@
-'use strict';
-const assert = require('node:assert');
-const { Parser } = require('../../lib');
+import { ok } from 'node:assert';
+import { Parser } from '../../lib/index.js';
 
 describe('Parser', function () {
   it('should emit wrong protocol error', function (done) {
     const p = new Parser();
 
     p.once('error', function (err) {
-      assert.ok(err);
+      ok(err);
       done();
     })
 

@@ -1,7 +1,5 @@
-'use strict';
-const assert = require('node:assert');
-const ldapjs = require('../../lib');
-const parseDN = ldapjs.parseDN;
+import assert from 'node:assert/strict';
+import { createClient, parseDN } from '../../lib/index.js';
 
 const SCHEME = process.env.SCHEME || 'ldap';
 const HOST = process.env.HOST || '127.0.0.1';
@@ -22,7 +20,7 @@ const baseDN = parseDN('ou=large_ou,dc=planetexpress,dc=com');
 
 describe('issue-885', function () {
     before(async function () {
-        client = ldapjs.createClient({ url: baseURL });
+        client = createClient({ url: baseURL });
         client.on('error', () => { });
         await client.bind('cn=admin,dc=planetexpress,dc=com', 'GoodNewsEveryone');
     });

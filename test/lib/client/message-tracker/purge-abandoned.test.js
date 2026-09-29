@@ -1,7 +1,6 @@
-'use strict';
-const assert = require('node:assert');
-const { MAX_MSGID } = require('../../../../lib/client/constants');
-const purgeAbandoned = require('../../../../lib/client/message-tracker/purge-abandoned');
+import { strictEqual, fail } from 'node:assert';
+import { MAX_MSGID } from '../../../../lib/client/constants.js';
+import purgeAbandoned from '../../../../lib/client/message-tracker/purge-abandoned.js';
 
 describe('purgeAbandoned', () => {
   it('should clear the queue if only one message is present', () => {
@@ -10,11 +9,11 @@ describe('purgeAbandoned', () => {
 
     purgeAbandoned(2, abandoned);
 
-    assert.strictEqual(abandoned.size, 0);
+    strictEqual(abandoned.size, 0);
 
     function cb (err) {
-      assert.strictEqual(err.name, 'AbandonedError');
-      assert.strictEqual(err.message, 'client request abandoned');
+      strictEqual(err.name, 'AbandonedError');
+      strictEqual(err.message, 'client request abandoned');
     }
   });
 
@@ -25,11 +24,11 @@ describe('purgeAbandoned', () => {
 
     purgeAbandoned(4, abandoned);
 
-    assert.strictEqual(abandoned.size, 0);
+    strictEqual(abandoned.size, 0);
 
     function cb (err) {
-      assert.strictEqual(err.name, 'AbandonedError');
-      assert.strictEqual(err.message, 'client request abandoned');
+      strictEqual(err.name, 'AbandonedError');
+      strictEqual(err.message, 'client request abandoned');
     }
   });
 
@@ -40,11 +39,11 @@ describe('purgeAbandoned', () => {
     // The abandon message used MAX_MSGID, so this is the first message in the new sequence.
     purgeAbandoned(1, abandoned);
 
-    assert.strictEqual(abandoned.size, 0);
+    strictEqual(abandoned.size, 0);
 
     function cb (err) {
-      assert.strictEqual(err.name, 'AbandonedError');
-      assert.strictEqual(err.message, 'client request abandoned');
+      strictEqual(err.name, 'AbandonedError');
+      strictEqual(err.message, 'client request abandoned');
     }
   });
 
@@ -54,10 +53,10 @@ describe('purgeAbandoned', () => {
 
     purgeAbandoned(1, abandoned);
 
-    assert.strictEqual(abandoned.size, 1);
+    strictEqual(abandoned.size, 1);
 
     function cb () {
-      assert.fail('should not be invoked');
+      fail('should not be invoked');
     }
   });
 });

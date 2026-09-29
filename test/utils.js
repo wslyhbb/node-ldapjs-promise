@@ -1,21 +1,20 @@
-'use strict';
-const os = require('node:os');
-const path = require('node:path');
-const crypto = require('node:crypto');
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 function uuid () {
-  return crypto.randomBytes(16).toString('hex');
+  return randomBytes(16).toString('hex');
 }
 
 function getSock () {
   if (process.platform === 'win32') {
     return '\\\\.\\pipe\\' + uuid();
   } else {
-    return path.join(os.tmpdir(), uuid());
+    return join(tmpdir(), uuid());
   }
 }
 
-module.exports = {
+export {
   getSock,
   uuid
 };
