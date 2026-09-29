@@ -18,6 +18,8 @@ directly modified.
 
 ## Usage
 
+For full docs, head on over to <https://wslyhbb.github.io/ldapjs-promise.github.io/>.
+
 The methods signatures are the same except instead of callbacks they return promises.
 
 ```javascript
